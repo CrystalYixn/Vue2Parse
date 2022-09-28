@@ -11,14 +11,16 @@
   <script>
     const app = new Vue({
       data: function() {
-        const a = 5
-        console.log(1, this)
         return {
           a: 100,
-          b: this.a
+          b: '233',
+          c: {
+            d: 500
+          }
         }
       }
     })
+    console.log(app)
   </script>
 </body>
 </html>
