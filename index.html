@@ -7,9 +7,13 @@
   <title>Document</title>
 </head>
 <body>
+  <div id="app">
+    {{ name }}: {{ age }}
+  </div>
   <script src="./dist/vue.js"></script>
   <script>
     const app = new Vue({
+      el: '#app',
       data: function() {
         return {
           name: '233',
@@ -18,8 +22,6 @@
         }
       }
     })
-    app.hobbies.push('game')
-    console.log(app)
   </script>
 </body>
 </html>
