@@ -8,7 +8,10 @@
 </head>
 <body>
   <div id="app">
-    {{ name }}: {{ age }}
+    <div style="color: red;">
+      {{ name }}     hello
+    </div>
+    <span> {{ age }} </span>
   </div>
   <script src="./dist/vue.js"></script>
   <script>
@@ -16,11 +19,15 @@
       el: '#app',
       data: function() {
         return {
-          name: '233',
-          age: 18,
-          hobbies: ['code'],
+          name: 'honi',
+          age: 24,
+          address: {
+            num: 30,
+            content: '回龙观'
+          },
+          hobbies: ['code', 'game'],
         }
-      }
+      },
     })
   </script>
 </body>
