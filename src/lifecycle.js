@@ -1,12 +1,13 @@
+import Watcher from "./observe/watcher"
 import { createElementVNode, createTextVNode } from "./vdom/index"
 
+/* 初始化与更新 */
 function patch(oldVNode, vnode) {
   const isRealElement = oldVNode.nodeType
   if (isRealElement) {
     const elm = oldVNode
     const parentElm = elm.parentNode
     const newElm = createElm(vnode)
-    console.log(newElm)
     parentElm.insertBefore(newElm, elm.nextSibling)
     parentElm.removeChild(elm)
     return newElm
@@ -41,17 +42,19 @@ function patchProps(el, props) {
 
 export function mountComponent(vm, el) {
   // 1. 调用 render 方法产生虚拟 DOM
-  const vnode = vm._render()
   vm.$el = el
-  // 2. 根据虚拟 DOM 产生真实 DOM
-  vm._update(vnode)
-  // 3. 插入到 el 元素中
+  const updateComponent = () => {
+    // 2. 根据虚拟 DOM 产生真实 DOM
+    const vnode = vm._render()
+    // 3. 插入到 el 元素中
+    vm._update(vnode)
+  }
+  new Watcher(vm, updateComponent, true)
 }
 
 export function initLifecycle(Vue) {
   Vue.prototype._update = function(vnode) {
     const el = this.$el
-    // 初始化与更新
     this.$el = patch(el, vnode)
   }
   Vue.prototype._render = function() {

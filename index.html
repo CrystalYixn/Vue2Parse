@@ -7,7 +7,7 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="app" style="color: red;background: yellow">
+  <div id="app" style="color: red;background: gray">
     <div style="color: aquamarine;">
       {{ name }}  hello {{ age }}  hello
     </div>
@@ -15,24 +15,21 @@
   </div>
   <script src="./dist/vue.js"></script>
   <script>
-    const app = new Vue({
-      el: '#app',
-      data: function() {
-        return {
-          name: 'honi',
-          age: 24,
-          address: {
-            num: 30,
-            content: '回龙观'
-          },
-          hobbies: ['code', 'game'],
-        }
+    const vm = new Vue({
+      data: {
+        name: 'honi',
+        age: 24,
+        address: {
+          num: 30,
+          content: '回龙观'
+        },
+        hobbies: ['code', 'game'],
       },
     })
+    vm.$mount('#app')
     setTimeout(() => {
-      app.name = 'flandre'
-      app.age = 30
-      app._update(app._render())
+      vm.name = 'flandre'
+      vm.age = 30
     }, 1000);
   </script>
 </body>

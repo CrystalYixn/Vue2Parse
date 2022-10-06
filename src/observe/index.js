@@ -1,4 +1,5 @@
 import { newPrototype } from './array'
+import Dep from './dep'
 
 class Observe {
   constructor(data) {
@@ -32,16 +33,20 @@ class Observe {
 export function defineReactive(target, key, value) {
   // 递归劫持
   observe(value)
+  const dep = new Dep()
   Object.defineProperty(target, key, {
     get() {
+      if (Dep.target) {
+        dep.depend()
+      }
       return value
     },
     set(newValue) {
-      console.log('数据劫持', value)
       if (newValue === value) return
       observe(newValue)
       // FIXME 没明白这里的 value 不应该是一个值吗，为什么还能进行赋值操作？
       value = newValue
+      dep.notify()
     }
   })
 }
