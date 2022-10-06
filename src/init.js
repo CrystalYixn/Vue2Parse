@@ -27,6 +27,6 @@ export function initMixin(Vue) {
       }
       ops.render = compileToFunciton(template)
     }
+    mountComponent(vm, el)
   }
-  mountComponent(vm, el)
 }
