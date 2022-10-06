@@ -27,10 +27,12 @@
       },
     })
     vm.$mount('#app')
-    setTimeout(() => {
-      vm.name = 'flandre'
-      vm.age = 30
-    }, 1000);
+    vm.name = 'flandre'
+    vm.age = 30
+    console.log(app.innerHTML)
+    vm.$nextTick(() => {
+      console.log(app.innerHTML)
+    })
   </script>
 </body>
 </html>
