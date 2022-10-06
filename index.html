@@ -15,6 +15,16 @@
   </div>
   <script src="./dist/vue.js"></script>
   <script>
+    Vue.mixin({
+      created() {
+        console.log('mixin-created')
+      }
+    })
+    // Vue.mixin({
+    //   created() {
+    //     console.log('mixin-created')
+    //   }
+    // })
     const vm = new Vue({
       data: {
         name: 'honi',
@@ -25,14 +35,11 @@
         },
         hobbies: ['code', 'game'],
       },
+      // created() {
+      //   console.log('created')
+      // }
     })
-    vm.$mount('#app')
-    vm.name = 'flandre'
-    vm.age = 30
-    console.log(app.innerHTML)
-    vm.$nextTick(() => {
-      console.log(app.innerHTML)
-    })
+    console.log(Vue.options)
   </script>
 </body>
 </html>
