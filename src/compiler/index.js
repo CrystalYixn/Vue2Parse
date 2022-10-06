@@ -6,7 +6,10 @@ export function compileToFunciton(template) {
   // 1. 解析 Ast
   let ast = parseHTML(template)
   // 2. 生成 render 函数
-  console.log(codegen(ast))
+  let code = codegen(ast)
+  code = `with(this){return ${code}}`
+  let render = new Function(code)
+  return render
 }
 
 function codegen(ast) {
