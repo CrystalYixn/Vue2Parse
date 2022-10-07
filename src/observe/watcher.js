@@ -1,4 +1,4 @@
-import Dep from "./dep"
+import Dep, { popTarget, pushTarget } from "./dep"
 
 let id = 0
 let queue = []
@@ -6,20 +6,30 @@ let has = {}
 let pendding = false
 
 class Watcher {
-  constructor(vm, fn, option) {
+  constructor(vm, fn, options) {
     this.id = id++
-    this.renderWatcher = option
+    this.vm = vm
+    this.renderWatcher = options
+    this.lazy = options.lazy
+    this.dirty = this.lazy
     this.getter = fn
     // 计算属性与清理时使用
     this.deps = []
     this.depsId = new Set()
-    this.get()
+
+    this.lazy ? undefined : this.get()
   }
 
   get() {
-    Dep.target = this
-    this.getter()
-    Dep.target = null
+    pushTarget(this)
+    const val = this.getter.call(this.vm)
+    popTarget()
+    return val
+  }
+
+  evaluate() {
+    this.value = this.get()
+    this.dirty = false
   }
 
   addDepend(dep) {
@@ -31,8 +41,18 @@ class Watcher {
     }
   }
 
+  depend() {
+    this.deps.forEach(i => i.depend())
+  }
+
   update() {
-    queueWatcher(this)
+    // 将拥有lazy的都视为计算属性
+    if (this.lazy) {
+      // 属性收集了计算watcher的依赖，触发update则认为计算属性依赖的某些值被改变
+      this.dirty = true
+    } else {
+      queueWatcher(this)
+    }
   }
 
   run() {

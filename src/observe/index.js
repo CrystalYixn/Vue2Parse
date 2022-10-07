@@ -64,6 +64,7 @@ export function defineReactive(target, key, value) {
     set(newValue) {
       if (newValue === value) return
       observe(newValue)
+      // FIXME 如果属性是一个普通数值这里的value为什么还能赋值？
       // value 是一个引用地址，每次访问数组索引前都会触发getter返回数组内存地址，再访问下标
       value = newValue
       dep.notify()

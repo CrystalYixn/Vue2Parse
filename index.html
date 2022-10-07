@@ -8,20 +8,25 @@
 </head>
 <body>
   <div id="app">
-    {{ arr }}
+    {{ fullName }} {{ fullName }} {{ fullName }}
   </div>
   <script src="./dist/vue.js"></script>
   <script>
     const vm = new Vue({
+      el: '#app',
       data: {
-        arr: [[1, 2]],
-        a: { a: 1 },
+        firstname: 'honi',
+        lastname: 'xn',
       },
+      computed: {
+        fullName() {
+          console.log('catch')
+          return this.firstname + this.lastname
+        }
+      }
     })
-    vm.$mount('#app')
     setTimeout(() => {
-      vm.arr[0].push(3)
-      // vm.arr.__ob__.dep.notify()
+      vm.firstname = 'flandre'
     }, 1000);
   </script>
 </body>
