@@ -20,14 +20,19 @@
       },
       computed: {
         fullName() {
-          console.log('catch')
           return this.firstname + this.lastname
+        }
+      },
+      watch: {
+        firstname(nv, ov) {
+          console.log(nv, ov)
         }
       }
     })
     setTimeout(() => {
       vm.firstname = 'flandre'
     }, 1000);
+    console.log(vm)
   </script>
 </body>
 </html>

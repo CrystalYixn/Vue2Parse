@@ -6,18 +6,25 @@ let has = {}
 let pendding = false
 
 class Watcher {
-  constructor(vm, fn, options) {
+  constructor(vm, expOrFn, options, cb) {
     this.id = id++
     this.vm = vm
     this.renderWatcher = options
     this.lazy = options.lazy
+    this.user = options.user
     this.dirty = this.lazy
-    this.getter = fn
+    if (typeof expOrFn === 'string') {
+      this.getter = function() {
+        return vm[expOrFn]
+      }
+    } else {
+      this.getter = expOrFn
+    }
+    this.cb = cb
     // 计算属性与清理时使用
     this.deps = []
     this.depsId = new Set()
-
-    this.lazy ? undefined : this.get()
+    this.value = this.lazy ? undefined : this.get()
   }
 
   get() {
@@ -56,7 +63,11 @@ class Watcher {
   }
 
   run() {
-    this.get()
+    const ov = this.value
+    const nv = this.get()
+    if (this.user) {
+      this.cb.call(this.vm, nv, ov)
+    }
   }
 }
 
