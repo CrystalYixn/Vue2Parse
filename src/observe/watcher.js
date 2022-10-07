@@ -36,7 +36,6 @@ class Watcher {
   }
 
   run() {
-    console.log('xx')
     this.get()
   }
 }

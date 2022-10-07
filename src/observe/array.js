@@ -32,7 +32,7 @@ methods.forEach(method => {
     if (inserted) {
       ob.observeArray(inserted)
     }
-    console.log(method + '劫持')
+    ob.dep.notify()
     return result
   }
 })

@@ -7,39 +7,22 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="app" style="color: red;background: gray">
-    <div style="color: aquamarine;">
-      {{ name }}  hello {{ age }}  hello
-    </div>
-    <li> world </li>
+  <div id="app">
+    {{ arr }}
   </div>
   <script src="./dist/vue.js"></script>
   <script>
-    Vue.mixin({
-      created() {
-        console.log('mixin-created')
-      }
-    })
-    // Vue.mixin({
-    //   created() {
-    //     console.log('mixin-created')
-    //   }
-    // })
     const vm = new Vue({
       data: {
-        name: 'honi',
-        age: 24,
-        address: {
-          num: 30,
-          content: '回龙观'
-        },
-        hobbies: ['code', 'game'],
+        arr: [[1, 2]],
+        a: { a: 1 },
       },
-      // created() {
-      //   console.log('created')
-      // }
     })
-    console.log(Vue.options)
+    vm.$mount('#app')
+    setTimeout(() => {
+      vm.arr[0].push(3)
+      // vm.arr.__ob__.dep.notify()
+    }, 1000);
   </script>
 </body>
 </html>
