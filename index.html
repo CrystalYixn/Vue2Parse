@@ -8,7 +8,6 @@
 </head>
 <body>
   <div id="app">
-    {{ fullName }} {{ fullName }} {{ fullName }}
   </div>
   <script src="./dist/vue.js"></script>
   <script>
@@ -25,13 +24,10 @@
       },
       watch: {
         firstname(nv, ov) {
-          console.log(nv, ov)
+          // console.log(nv, ov)
         }
       }
     })
-    setTimeout(() => {
-      vm.firstname = 'flandre'
-    }, 1000);
     console.log(vm)
   </script>
 </body>
