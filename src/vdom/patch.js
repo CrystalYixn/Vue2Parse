@@ -30,7 +30,7 @@ export function createElm(vnode) {
 }
 
 /* 将所有属性设置到DOM元素上 */
-export function patchProps(el, oldProprs, props) {
+export function patchProps(el, oldProprs = {}, props = {}) {
   const oldStyles = oldProprs.style
   const newStyles = props.style
   // 移除旧节点中有，新节点没有的样式
@@ -57,6 +57,7 @@ export function patchProps(el, oldProprs, props) {
   }
 }
 
+/* 更新DOM渲染 */
 function patchVnode(oldVNode, vnode) {
   // 两个节点的tag与key相同则视为同一个节点
   if (!isSameVnode(oldVNode, vnode)) {
@@ -96,13 +97,83 @@ function updateChildren(el, oldChildren, newChildren) {
   let oldEndIndex = oldChildren.length - 1
   let newEndIndex = newChildren.length - 1
 
-  let oldStartChildren = oldChildren[0]
-  let newStartChildren = newChildren[0]
-  let oldEndChildren = oldChildren[oldEndIndex]
-  let newEndChildren = newChildren[newEndIndex]
+  let oldStartVnode = oldChildren[0]
+  let newStartVnode = newChildren[0]
+  let oldEndVnode = oldChildren[oldEndIndex]
+  let newEndVnode = newChildren[newEndIndex]
+
+  const map = makeIndexByKey(oldChildren)
 
   // 双方有一方头指针大于尾指针则停止循环
   while (oldStartIndex <= oldEndIndex && newStartIndex <= newEndIndex) {
-    
+    if (!oldStartVnode) {
+      oldStartVnode = oldChildren[++oldStartIndex]
+    } else if (!oldEndVnode) {
+      oldEndVnode = oldChildren[--oldEndIndex]
+    } else if (isSameVnode(oldStartVnode, newStartVnode)) {
+      // 头指针步进，处理push
+      patchVnode(oldStartVnode, newStartVnode)
+      oldStartVnode = oldChildren[++oldStartIndex]
+      newStartVnode = newChildren[++newStartIndex]
+    } else if (isSameVnode(oldEndVnode, newEndVnode)) {
+      // 尾指针步进，处理unshift
+      patchVnode(oldEndVnode, newEndVnode)
+      oldEndVnode = oldChildren[--oldEndIndex]
+      newEndVnode = newChildren[--newEndIndex]
+    } else if (isSameVnode(oldEndVnode, newStartVnode)) {
+      // 交叉对比，处理reverse或sort情况
+      patchVnode(oldEndVnode, newStartVnode)
+      // 将旧的尾巴移动到旧的前面
+      el.insertBefore(oldEndVnode.el, oldStartVnode.el)
+      oldEndVnode = oldChildren[--oldEndIndex]
+      newStartVnode = newChildren[++newStartIndex]
+    } else if (isSameVnode(oldStartVnode, newEndVnode)) {
+      // 交叉对比，处理reverse或sort情况
+      patchVnode(oldStartVnode, newEndVnode)
+      el.insertBefore(oldStartVnode.el, oldEndVnode.el.nextSibling)
+      oldStartVnode = oldChildren[++oldStartIndex]
+      newEndVnode = newChildren[--newEndIndex]
+    } else {
+      // 处理乱序情况
+      // 根据老列表做映射关系，在旧的中找(根据key找)，找到则移动到当前旧头指针前(并标记旧的元素已被处理)，找不到则插入(旧头指针前)，多余的删除
+      let moveIndex = map[newStartVnode.key]
+      if (moveIndex !== undefined) {
+        let moveVnode = oldChildren[moveIndex]
+        el.insertBefore(moveVnode.el, oldStartVnode.el)
+        oldChildren[moveIndex] = undefined
+        patchVnode(moveVnode, newStartVnode)
+      } else {
+        el.insertBefore(createElm(newStartVnode), oldStartVnode.el)
+      }
+      newStartVnode = newChildren[++newStartIndex]
+    }
   }
+  // 处理所有新children中未被遍历到的元素(追加、插入)
+  if (newStartIndex <= newEndIndex) {
+    for (let i = newStartIndex; i <= newEndIndex; i++) {
+      const childEl = createElm(newChildren[i])
+      // 如果获取到了下一个元素，则证明尾指针有移动，一定是插入
+      const anchar = newChildren[newEndIndex + 1] ? newChildren[newEndIndex + 1].el : null
+      // 如果anchar为null则视为appendChild
+      el.insertBefore(childEl, anchar)
+    }
+  }
+  // 删除所有旧children中未被遍历到的元素
+  if (oldStartIndex <= oldEndIndex) {
+    const children = []
+    for (let i = oldStartIndex; i <= oldEndIndex; i++) {
+      if (oldChildren[i]) {
+        children.push(oldChildren[i])
+      }
+    }
+    children.forEach(child => el.removeChild(child.el))
+  }
+}
+
+function makeIndexByKey(children) {
+  const map = {}
+  children.forEach((child, index) => {
+    map[child.key] = index
+  })
+  return map
 }
