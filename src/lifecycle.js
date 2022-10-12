@@ -16,8 +16,15 @@ export function mountComponent(vm, el) {
 
 export function initLifecycle(Vue) {
   Vue.prototype._update = function(vnode) {
-    const el = this.$el
-    this.$el = patch(el, vnode)
+    const prevVnode = this._vnode
+    // 将组件产生的虚拟节点保存
+    this._vnode = vnode
+    if (prevVnode) {
+      this.$el = patch(prevVnode, vnode)
+    } else {
+      this.$el = patch(this.$el, vnode)
+    }
+    // this.$el = patch(el, vnode)
   }
   Vue.prototype._render = function() {
     return this.$options.render.call(this)
