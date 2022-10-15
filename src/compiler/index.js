@@ -1,8 +1,8 @@
 import { parseHTML } from "./parse";
-// 匹配 mustach 语法
+// 匹配 mustache 语法
 const defaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g
 
-export function compileToFunciton(template) {
+export function compileToFunction(template) {
   // 1. 解析 Ast
   let ast = parseHTML(template)
   // 2. 生成 render 函数
@@ -12,6 +12,7 @@ export function compileToFunciton(template) {
   return render
 }
 
+/** ast转为字符串 */
 function codegen(ast) {
   let children = genChildren(ast.children)
   let code = `_c('${ast.tag}', ${ ast.attrs.length ? genProps(ast.attrs) : 'null' }${ ast.children.length ? `, ${children}` : '' })`

@@ -1,4 +1,4 @@
-import { compileToFunciton } from "./compiler/index"
+import { compileToFunction } from "./compiler/index"
 import { initGlobalAPI } from "./globalAPI"
 import { initMixin } from "./init"
 import { initLifecycle } from "./lifecycle"

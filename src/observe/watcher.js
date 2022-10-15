@@ -3,7 +3,7 @@ import Dep, { popTarget, pushTarget } from "./dep"
 let id = 0
 let queue = []
 let has = {}
-let pendding = false
+let pending = false
 
 class Watcher {
   constructor(vm, expOrFn, options, cb) {
@@ -75,7 +75,7 @@ function flushScheduleQueue() {
   queue.forEach(watcher => watcher.run())
   queue = []
   has = {}
-  pendding = false
+  pending = false
 }
 
 function queueWatcher(watcher) {
@@ -84,9 +84,9 @@ function queueWatcher(watcher) {
     queue.push(watcher)
     has[id] = true
 
-    if (!pendding) {
+    if (!pending) {
       nextTick(flushScheduleQueue, 0);
-      pendding = true
+      pending = true
     }
   }
 }

@@ -6,9 +6,9 @@ export function mountComponent(vm, el) {
   // 1. 调用 render 方法产生虚拟 DOM
   vm.$el = el
   const updateComponent = () => {
-    // 2. 根据虚拟 DOM 产生真实 DOM
+    // 2. 创建 VNode
     const vnode = vm._render()
-    // 3. 插入到 el 元素中
+    // 3. 根据虚拟 DOM 产生真实 DOM，插入到 el 元素中
     vm._update(vnode)
   }
   new Watcher(vm, updateComponent, true)
@@ -20,11 +20,12 @@ export function initLifecycle(Vue) {
     // 将组件产生的虚拟节点保存
     this._vnode = vnode
     if (prevVnode) {
+      // 直接对比两个vnode，尽量复用$el部分更新
       this.$el = patch(prevVnode, vnode)
     } else {
+      // 视为初始化，直接替换$el的内容
       this.$el = patch(this.$el, vnode)
     }
-    // this.$el = patch(el, vnode)
   }
   Vue.prototype._render = function() {
     return this.$options.render.call(this)
@@ -35,6 +36,7 @@ export function initLifecycle(Vue) {
   Vue.prototype._v = function() {
     return createTextVNode(this, ...arguments)
   }
+  /** 创建 mustache 内容 */
   Vue.prototype._s = function(value) {
     if (typeof value === 'object') {
       return JSON.stringify(value)
