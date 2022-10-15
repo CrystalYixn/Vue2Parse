@@ -2,6 +2,10 @@ import { isSameVnode } from "./index"
 
 /* 初始化与更新 */
 export function patch(oldVNode, vnode) {
+  // 自定义组件挂载
+  if (!oldVNode) {
+    return createElm(vnode)
+  }
   const isRealElement = oldVNode.nodeType
   // 视为初始化
   if (isRealElement) {
@@ -16,13 +20,28 @@ export function patch(oldVNode, vnode) {
   }
 }
 
+function createComponent(vnode) {
+  let i = vnode.data
+  if ((i = i.hook) && (i = i.init)) {
+    i(vnode)
+  }
+  if (vnode.componentInstance) {
+    return true
+  }
+}
+
 /* 根据vnode创建真实DOM */
 export function createElm(vnode) {
   let { tag, data, children, text } = vnode
   if (typeof tag === 'string') {
+    if (createComponent(vnode)) { return vnode.componentInstance.$el }
     vnode.el = document.createElement(tag) // 放在 vnode 上为后续 diff 算法做对比使用
     patchProps(vnode.el, {}, data)
-    children.forEach(child => vnode.el.appendChild(createElm(child)))
+    // children.forEach(child => vnode.el.appendChild(createElm(child)))
+    children.forEach(child => {
+      const element = createElm(child)
+      vnode.el.appendChild(element)
+    })
   } else {
     vnode.el = document.createTextNode(text)
   }
@@ -30,8 +49,8 @@ export function createElm(vnode) {
 }
 
 /* 将所有属性设置到DOM元素上 */
-export function patchProps(el, oldProprs = {}, props = {}) {
-  const oldStyles = oldProprs.style
+export function patchProps(el, oldProps = {}, props = {}) {
+  const oldStyles = oldProps.style
   const newStyles = props.style
   // 移除旧节点中有，新节点没有的样式
   for (const key in oldStyles) {
@@ -40,7 +59,7 @@ export function patchProps(el, oldProprs = {}, props = {}) {
     }
   }
   // 移除旧节点中有，新节点没有的属性
-  for (const key in oldProprs) {
+  for (const key in oldProps) {
     if (!props[key]) {
       el.removeAttribute(key)
     }
@@ -153,9 +172,9 @@ function updateChildren(el, oldChildren, newChildren) {
     for (let i = newStartIndex; i <= newEndIndex; i++) {
       const childEl = createElm(newChildren[i])
       // 如果获取到了下一个元素，则证明尾指针有移动，一定是插入
-      const anchar = newChildren[newEndIndex + 1] ? newChildren[newEndIndex + 1].el : null
-      // 如果anchar为null则视为appendChild
-      el.insertBefore(childEl, anchar)
+      const anchor = newChildren[newEndIndex + 1] ? newChildren[newEndIndex + 1].el : null
+      // 如果anchor为null则视为appendChild
+      el.insertBefore(childEl, anchor)
     }
   }
   // 删除所有旧children中未被遍历到的元素

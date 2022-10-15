@@ -15,12 +15,12 @@
     })
     let Sub = Vue.extend({
       // template: '<button>声明组件</button>',
-      template: '<button>子组件<my-button></my-button></button>',
-      components: {
-        'my-button': {
-          template: '<button>子组件button</button>'
-        }
-      }
+      template: '<button>子组件<my-button /></button>',
+      // components: {
+      //   'my-button': {
+      //     template: '<button>子组件button</button>'
+      //   }
+      // }
     })
     new Sub().$mount('#root')
   </script>

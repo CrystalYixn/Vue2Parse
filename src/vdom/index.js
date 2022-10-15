@@ -1,6 +1,7 @@
 const isReservedTag = (tag) => {
   return ['a', 'div', 'p', 'button', 'ul', 'li', 'span'].includes(tag)
 }
+/** 创建虚拟元素节点 */
 export function createElementVNode(vm, tag, data, ...children) {
   if (data == null) {
     data = {}
@@ -19,14 +20,17 @@ function createComponentVnode(vm, tag, key, data, children, ctor) {
   if (typeof ctor === 'object') {
     ctor = vm.$options._base.extend(ctor)
   }
+  // FIXME 此处不是覆盖了DOM上的hook属性？
   data.hook = {
-    init() {
-      
+    init(vnode) {
+      let instance = vnode.componentInstance = new vnode.componentOptions.ctor
+      instance.$mount()
     }
   }
   return vnode(vm, tag, key, data, children, null, { ctor })
 }
 
+/** 创建虚拟文本节点 */
 export function createTextVNode(vm, text) {
   return vnode(vm, undefined, undefined, undefined, undefined, text)
 }
