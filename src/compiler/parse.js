@@ -14,8 +14,11 @@ const startTagClose = /^\s*(\/?)>/
 export function parseHTML(html) {
   const ELEMENT_TYPE = 1
   const TEXT_TYPE = 3
+  // 用于存放内部标签的栈，用于步进时结束一个标签后确定上一个父级
   const stack = []
+  // 用于步进时确定当前在哪个标签内部
   let currentParent
+  // 最终返回结果，从根节点开始的ast树
   let root
   while(html) {
     // 为 0 代表开始或结束标签，大于 0 代表文本结束位置

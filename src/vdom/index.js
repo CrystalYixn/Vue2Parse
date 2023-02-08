@@ -2,17 +2,17 @@ const isReservedTag = (tag) => {
   return ['a', 'div', 'p', 'button', 'ul', 'li', 'span'].includes(tag)
 }
 /** 创建虚拟元素节点 */
-export function createElementVNode(vm, tag, data, ...children) {
-  if (data == null) {
-    data = {}
+export function createElementVNode(vm, tag, attr, ...children) {
+  if (attr == null) {
+    attr = {}
   }
-  const { key } = data
-  key && delete data.key
+  const { key } = attr
+  key && delete attr.key
   if (isReservedTag(tag)) {
-    return vnode(vm, tag, key, data, children)
+    return vnode(vm, tag, key, attr, children)
   } else {
     const ctor = vm.$options.components[tag]
-    return createComponentVnode(vm, tag, key, data, children, ctor)
+    return createComponentVnode(vm, tag, key, attr, children, ctor)
   }
 }
 
