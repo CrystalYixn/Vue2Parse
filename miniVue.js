@@ -1,20 +1,19 @@
 function Vue(options) {
   const vm = this
-  const { el, data, template } = options
+  const { el, data, template, computed = {} } = options
 
   // 数据初始化
   // 1. 数据劫持
   observe()
   // 2. 数据代理
   proxy()
+  // 初始化计算属性
+  initComputed()
 
   // 模板编译
   const element = document.querySelector(el)
   const tmp = template || element.outerHTML
-  // 1. 将html字符串转为ast抽象语法树
-  const ast = parseHTML(tmp)
-  // 2. 将ast转换为render函数
-  const render = codeGen(ast)
+  const render = compileToFunction(tmp)
 
   // 渲染元素
   // 初始化$el
@@ -25,7 +24,7 @@ function Vue(options) {
     // 2. 更新DOM元素
     vm.$el = patch(vm.$el, vnode)
   }
-  new Watcher(vm._update)
+  new Watcher(vm, vm._update)
 
   function observe() {
     const dep = new Dep()
@@ -36,6 +35,7 @@ function Vue(options) {
           // 依赖收集
           if (Dep.target) {
             dep.subs.push(Dep.target)
+            Dep.target.deps.push(dep)
           }
           return val
         },
@@ -43,6 +43,28 @@ function Vue(options) {
           val = nv
           // 更新派发
           dep.subs.forEach(w => w.update())
+        }
+      })
+    })
+  }
+
+  function initComputed() {
+    Object.keys(computed).forEach(key => {
+      const fn = computed[key]
+      let watcher = new Watcher(vm, fn, { lazy: true })
+      Object.defineProperty(vm, key, {
+        get() {
+          if (watcher.dirty) {
+            watcher.evaluate()
+          }
+          // 继续向上收集依赖
+          if (Dep.target) {
+            watcher.deps.forEach(i => {
+              i.subs.push(Dep.target)
+              Dep.target.deps.push(i)
+            })
+          }
+          return watcher.value
         }
       })
     })
@@ -61,30 +83,14 @@ function Vue(options) {
     }
   }
 
-  // 解析html字符串为ast
-  function parseHTML(tmp) {
-    return {
-      tag: 'div',
-      type: 1,
-      attrs: [{ name: 'id', value: 'app' }],
-      children: [{
-        tag: undefined,
-        type: 3,
-        attrs: undefined,
-        children: [],
-        text: '{{name}}',
-        // 指向父级
-        parent: '...',
-      }],
-      text: undefined,
-      parent: null,
-    }
-  }
-
-  // 生成render函数
-  function codeGen(ast) {
-    const code = `_c('div', {id:"app"}, _v(_s(name)))`
-    return new Function(`with(this) {return ${code}}`)
+  function compileToFunction(template) {
+    // 1. 解析 Ast
+    let ast = parseHTML(template)
+    // 2. 生成 render 函数
+    let code = codegen(ast)
+    code = `with(this){return ${code}}`
+    let render = new Function(code)
+    return render
   }
 
   // 更新元素
@@ -139,18 +145,35 @@ function Dep() {
   // 存放更新触发器
   this.subs = []
 }
+const depStack = []
 // 存放当前正在渲染的 更新触发器
 Dep.prototype.target = null
 
-// 更新触发器对象，每个组件绑定一个更新触发器，用于保存渲染函数
-function Watcher(fn) {
-  this.update = () => {
+// 更新触发器对象，每个更新触发器都保存一个执行函数（组件更新、计算属性更新）
+function Watcher(vm, fn, option = {}) {
+  this.lazy = option.lazy
+  this.dirty = option.lazy
+  this.deps = []
+  this.get = () => {
+    depStack.push(this)
     Dep.target = this
-    // 组件渲染方法
-    fn()
-    Dep.target = null
+    const value = fn.call(vm)
+    depStack.pop()
+    Dep.target = depStack[depStack.length - 1]
+    return value
   }
-  this.update()
+  this.update = () => {
+    // 如果是计算属性
+    if (this.lazy) {
+      this.dirty = true
+    } else {
+      this.get()
+    }
+  }
+  this.evaluate = () => {
+    this.value = this.get()
+  }
+  !this.lazy && this.update()
 }
 
 initMixin(Vue)

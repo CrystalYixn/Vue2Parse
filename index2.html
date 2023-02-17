@@ -7,19 +7,27 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="app">{{ name }}</div>
+  <div id="app">{{ fullName }}</div>
+  <script src="./parseHtml.js"></script>
+  <script src="./codeGen.js"></script>
   <script src="./miniVue.js"></script>
   <script>
     const app = new Vue({
       el: '#app',
       data: {
-        name: 'whh'
+        firstName: 'peiqiang',
+        lastName: 'liu',
       },
+      computed: {
+        fullName() {
+          return `${this.firstName} ${this.lastName}`
+        }
+      }
     })
-
     setTimeout(() => {
-      app.name = 'lxm'
-    }, 1500);
+      app.lastName = 'zhang'
+    }, 1500)
+    console.log(app)
   </script>
 </body>
 </html>
