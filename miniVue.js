@@ -1,6 +1,6 @@
 function Vue(options) {
   const vm = this
-  const { el, data, template, computed = {} } = options
+  const { el, data, template, computed = {}, watch = {} } = options
 
   // 数据初始化
   // 1. 数据劫持
@@ -9,6 +9,7 @@ function Vue(options) {
   proxy()
   // 初始化计算属性
   initComputed()
+  initWatch()
 
   // 模板编译
   const element = document.querySelector(el)
@@ -67,6 +68,13 @@ function Vue(options) {
           return watcher.value
         }
       })
+    })
+  }
+
+  function initWatch() {
+    Object.keys(watch).forEach(k => {
+      const cb = watch[k]
+      new Watcher(vm, k, { user: true }, cb)
     })
   }
 
@@ -150,10 +158,14 @@ const depStack = []
 Dep.prototype.target = null
 
 // 更新触发器对象，每个更新触发器都保存一个执行函数（组件更新、计算属性更新）
-function Watcher(vm, fn, option = {}) {
-  this.lazy = option.lazy
-  this.dirty = option.lazy
+function Watcher(vm, expOrFn, option = {}, cb) {
+  const { lazy, user } = option
+  this.lazy = lazy
+  this.dirty = lazy
   this.deps = []
+  this.user = user
+  this.cb = cb
+  const fn = user ? () => vm[expOrFn] : expOrFn
   this.get = () => {
     depStack.push(this)
     Dep.target = this
@@ -163,17 +175,21 @@ function Watcher(vm, fn, option = {}) {
     return value
   }
   this.update = () => {
+    const ov = this.value
     // 如果是计算属性
     if (this.lazy) {
       this.dirty = true
     } else {
-      this.get()
+      this.value = this.get()
+    }
+    if (this.user) {
+      cb.call(vm, this.value, ov)
     }
   }
   this.evaluate = () => {
     this.value = this.get()
   }
-  !this.lazy && this.update()
+  this.value = this.lazy ? undefined : this.get()
 }
 
 initMixin(Vue)

@@ -7,7 +7,7 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="app">{{ fullName }}</div>
+  <div id="app"></div>
   <script src="./parseHtml.js"></script>
   <script src="./codeGen.js"></script>
   <script src="./miniVue.js"></script>
@@ -16,16 +16,15 @@
       el: '#app',
       data: {
         firstName: 'peiqiang',
-        lastName: 'liu',
       },
-      computed: {
-        fullName() {
-          return `${this.firstName} ${this.lastName}`
+      watch: {
+        firstName(nv, ov) {
+          console.log(nv, ov)
         }
       }
     })
     setTimeout(() => {
-      app.lastName = 'zhang'
+      app.firstName = 'zhang'
     }, 1500)
     console.log(app)
   </script>
