@@ -1,6 +1,6 @@
-function Vue(options) {
+function Vue(options = {}) {
   const vm = this
-  const { el, data, template, computed = {}, watch = {} } = options
+  const { el, data = {}, template, computed = {}, watch = {} } = options
 
   // 数据初始化
   // 1. 数据劫持
@@ -12,20 +12,23 @@ function Vue(options) {
   initWatch()
 
   // 模板编译
-  const element = document.querySelector(el)
-  const tmp = template || element.outerHTML
-  const render = compileToFunction(tmp)
+  if (el) {
 
-  // 渲染元素
-  // 初始化$el
-  vm.$el = element
-  vm._update = () => {
-    // 1. 创建vnode
-    const vnode = render.call(vm)
-    // 2. 更新DOM元素
-    vm.$el = patch(vm.$el, vnode)
+    const element = document.querySelector(el)
+    const tmp = template || element.outerHTML
+    const render = compileToFunction(tmp)
+    // 渲染元素
+    // 初始化$el
+    vm.$el = element
+    vm._update = () => {
+      // 1. 创建vnode
+      const vnode = render.call(vm)
+      // 2. 更新DOM元素
+      vm.$el = patch(vm.$el, vnode)
+    }
+    new Watcher(vm, vm._update)
   }
-  new Watcher(vm, vm._update)
+
 
   function observe() {
     const dep = new Dep()
@@ -90,37 +93,86 @@ function Vue(options) {
       })
     }
   }
+}
 
-  function compileToFunction(template) {
-    // 1. 解析 Ast
-    let ast = parseHTML(template)
-    // 2. 生成 render 函数
-    let code = codegen(ast)
-    code = `with(this){return ${code}}`
-    let render = new Function(code)
-    return render
-  }
+function compileToFunction(template) {
+  // 1. 解析 Ast
+  let ast = parseHTML(template)
+  // 2. 生成 render 函数
+  let code = codegen(ast)
+  code = `with(this){return ${code}}`
+  let render = new Function(code)
+  return render
+}
 
-  // 更新元素
-  function patch(oldNode, vnode) {
+// 更新元素
+function patch(oldNode, vnode) {
+  // 如果有nodeType属性则为真实节点，否则为VNode
+  if (oldNode.nodeType) {
     const parentElm = oldNode.parentNode
     const newElm = createElm(vnode)
     parentElm.insertBefore(newElm, oldNode.nextSibling)
     parentElm.removeChild(oldNode)
     return newElm
+  } else {
+    return patchVNode(oldNode, vnode)
   }
+}
 
-  // 创建真实DOM元素
-  function createElm(vnode) {
-    let { tag, children, text } = vnode
-    if (tag) {
-      vnode.el = document.createElement(tag)
-      children.forEach(child => vnode.el.appendChild(createElm(child)))
-    } else {
-      vnode.el = document.createTextNode(text)
-    }
-    return vnode.el
+function isSameNode(oldNode, vnode) {
+  const { oKey, oTag } = oldNode
+  const { vKey, vTag } = vnode
+  return oKey === vKey && oTag === vTag
+}
+
+// 创建真实DOM元素
+function createElm(vnode) {
+  let { tag, children, text } = vnode
+  if (tag) {
+    vnode.el = document.createElement(tag)
+    children.forEach(child => vnode.el.appendChild(createElm(child)))
+  } else {
+    vnode.el = document.createTextNode(text)
   }
+  return vnode.el
+}
+
+// diff算法, 比较两个vnode
+function patchVNode(oldNode, vnode) {
+  const el = vnode.el = oldNode.el
+  // 新旧节点相同则直接替换
+  if (!isSameNode(oldNode, vnode)) {
+    return oldNode.el.parentNode.replaceChild(createElm(vnode), oldNode.el)
+  }
+  // FIX 文本节点不是触发了上面然后return了吗？
+  // 文本节点处理
+  if (!vnode.tag) {
+    oldNode.el.textContext = vnode.text
+  }
+  const oldChildren = oldNode.children || []
+  const children = vnode.children || []
+  // 旧列表头尾双指针
+  let oldStartIndex = 0
+  let oldEndIndex = oldChildren.length - 1
+  let oldStartNode = oldChildren[oldStartIndex]
+  // 新列表头尾双指针
+  let startIndex = 0
+  let endIndex = children.length - 1
+  let startNode = children[startIndex]
+  // 判断完所有新元素或判断完所有旧元素则循环终止
+  while(oldStartIndex <= oldEndIndex && startIndex <= endIndex) {
+    // push情况
+    if (isSameNode(oldStartNode, startNode)) {
+      oldStartNode = oldChildren[++oldStartIndex]
+      startNode = children[++startIndex]
+    }
+  }
+  if (startIndex <= endIndex) {
+    for (let i = startIndex; i <= endIndex; ++i) {
+      el.appendChild(createElm(children[i]))
+    }
+  }
+  return el
 }
 
 function initMixin(Vue) {
@@ -193,3 +245,22 @@ function Watcher(vm, expOrFn, option = {}, cb) {
 }
 
 initMixin(Vue)
+
+
+preVnode = compileToFunction(`
+<ul>
+  <li>a</li>
+  <li>b</li>
+  <li>c</li>
+</ul>`).call(new Vue({ el: '#app' }))
+document.body.append(createElm(preVnode))
+
+setTimeout(() => {
+  patch(preVnode, compileToFunction(`
+  <ul>
+    <li>a</li>
+    <li>b</li>
+    <li>c</li>
+    <li>d</li>
+  </ul>`).call(new Vue()))
+}, 1000)

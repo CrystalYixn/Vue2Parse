@@ -7,26 +7,11 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="app"></div>
+  <ul id="app"></ul>
   <script src="./parseHtml.js"></script>
   <script src="./codeGen.js"></script>
   <script src="./miniVue.js"></script>
   <script>
-    const app = new Vue({
-      el: '#app',
-      data: {
-        firstName: 'peiqiang',
-      },
-      watch: {
-        firstName(nv, ov) {
-          console.log(nv, ov)
-        }
-      }
-    })
-    setTimeout(() => {
-      app.firstName = 'zhang'
-    }, 1500)
-    console.log(app)
   </script>
 </body>
 </html>
