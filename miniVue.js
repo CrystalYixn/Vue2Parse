@@ -120,9 +120,11 @@ function patch(oldNode, vnode) {
 }
 
 function isSameNode(oldNode, vnode) {
-  const { oKey, oTag } = oldNode
-  const { vKey, vTag } = vnode
-  return oKey === vKey && oTag === vTag
+  const { data: oData, tag: oTag } = oldNode
+  const { data, tag: tag } = vnode
+  const oKey = oData?.key
+  const key = data?.key
+  return oKey === key && oTag === tag
 }
 
 // 创建真实DOM元素
@@ -155,21 +157,42 @@ function patchVNode(oldNode, vnode) {
   let oldStartIndex = 0
   let oldEndIndex = oldChildren.length - 1
   let oldStartNode = oldChildren[oldStartIndex]
+  let oldEndNode = oldChildren[oldEndIndex]
   // 新列表头尾双指针
   let startIndex = 0
   let endIndex = children.length - 1
   let startNode = children[startIndex]
+  let endNode = children[endIndex]
   // 判断完所有新元素或判断完所有旧元素则循环终止
   while(oldStartIndex <= oldEndIndex && startIndex <= endIndex) {
     // push情况
     if (isSameNode(oldStartNode, startNode)) {
       oldStartNode = oldChildren[++oldStartIndex]
       startNode = children[++startIndex]
+    } else if (isSameNode(oldEndNode, endNode)) {
+      // unshift情况
+      oldEndNode = oldChildren[--oldEndIndex]
+      endNode = children[--endIndex]
     }
   }
+  // 遍历所有未判断到的新列表元素, 需要追加或插入元素
   if (startIndex <= endIndex) {
     for (let i = startIndex; i <= endIndex; ++i) {
-      el.appendChild(createElm(children[i]))
+      // 尾指针的后一个元素存在时为插入操作, 否则为追加操作
+      if (children[endIndex + 1]) {
+        // 要插入的点一定是有真实元素的点, 因此用oldChildren
+        el.insertBefore(createElm(children[i]), oldChildren[oldEndIndex + 1].el)
+      } else {
+        // 已知只有新旧列表末尾相同时尾指针才会移动
+        // 设尾指针指向最后一个元素, 可以推断出尾指针没有移动, 再推断出新旧列表末尾元素不同, 得到结论需要追加不同的元素
+        el.appendChild(createElm(children[i]))
+      }
+    }
+  }
+  // 遍历所有未判断到的旧列表元素, 需要移除元素
+  if (oldStartIndex <= oldEndIndex) {
+    for (let i = startIndex; i <= oldEndIndex; i++) {
+      el.removeChild(oldChildren[i].el)
     }
   }
   return el
@@ -245,22 +268,3 @@ function Watcher(vm, expOrFn, option = {}, cb) {
 }
 
 initMixin(Vue)
-
-
-preVnode = compileToFunction(`
-<ul>
-  <li>a</li>
-  <li>b</li>
-  <li>c</li>
-</ul>`).call(new Vue({ el: '#app' }))
-document.body.append(createElm(preVnode))
-
-setTimeout(() => {
-  patch(preVnode, compileToFunction(`
-  <ul>
-    <li>a</li>
-    <li>b</li>
-    <li>c</li>
-    <li>d</li>
-  </ul>`).call(new Vue()))
-}, 1000)

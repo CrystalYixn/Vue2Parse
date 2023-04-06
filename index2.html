@@ -12,6 +12,24 @@
   <script src="./codeGen.js"></script>
   <script src="./miniVue.js"></script>
   <script>
+    preVnode = compileToFunction(`
+      <ul>
+        <li key="a">a</li>
+        <li key="b">b</li>
+        <li key="c">c</li>
+      </ul>`).call(new Vue({ el: '#app' }))
+    document.body.append(createElm(preVnode))
+
+    setTimeout(() => {
+      patch(preVnode, compileToFunction(`
+        <ul>
+          <li key="d">d</li>
+          <li key="e">e</li>
+          <li key="a">a</li>
+          <li key="b">b</li>
+          <li key="c">c</li>
+        </ul>`).call(new Vue()))
+    }, 1000)
   </script>
 </body>
 </html>
