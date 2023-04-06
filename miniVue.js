@@ -173,6 +173,16 @@ function patchVNode(oldNode, vnode) {
       // unshift情况
       oldEndNode = oldChildren[--oldEndIndex]
       endNode = children[--endIndex]
+    } else if (isSameNode(oldStartNode, endNode)) { // sort与reverse
+      el.insertBefore(oldStartNode.el, oldEndNode.el.nextSibling)
+      oldStartNode = oldChildren[++oldStartIndex]
+      endNode = children[--endIndex]
+    } else if (isSameNode(oldEndNode, startNode)) {
+      // 为什么需要相似的头尾与尾头比较? ——在sort情况下可能出现某个头元素移动到末尾的情况时与顺序比对结合使用能得出最少的更新方式
+      // a b c d -> b c d a
+      el.insertBefore(oldEndNode.el, oldStartNode.el)
+      oldEndNode = oldChildren[--oldEndIndex]
+      startNode = children[++startIndex]
     }
   }
   // 遍历所有未判断到的新列表元素, 需要追加或插入元素
@@ -180,10 +190,14 @@ function patchVNode(oldNode, vnode) {
     for (let i = startIndex; i <= endIndex; ++i) {
       // 尾指针的后一个元素存在时为插入操作, 否则为追加操作
       if (children[endIndex + 1]) {
+        // 已知尾指针指向不是最后一个元素
+        // 推导得新列表最后一个元素在旧列表中存在, 新列表最后一个元素不用追加或插入, 追加操作一定是将元素添加到末尾
+        // 结论一定是插入操作
+
         // 要插入的点一定是有真实元素的点, 因此用oldChildren
         el.insertBefore(createElm(children[i]), oldChildren[oldEndIndex + 1].el)
       } else {
-        // 已知只有新旧列表末尾相同时尾指针才会移动
+        // 已知只有新旧列表有相同元素时尾指针才会移动, 
         // 设尾指针指向最后一个元素, 可以推断出尾指针没有移动, 再推断出新旧列表末尾元素不同, 得到结论需要追加不同的元素
         el.appendChild(createElm(children[i]))
       }

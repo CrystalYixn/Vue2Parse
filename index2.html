@@ -17,6 +17,7 @@
         <li key="a">a</li>
         <li key="b">b</li>
         <li key="c">c</li>
+        <li key="d">d</li>
       </ul>`).call(new Vue({ el: '#app' }))
     document.body.append(createElm(preVnode))
 
@@ -24,10 +25,9 @@
       patch(preVnode, compileToFunction(`
         <ul>
           <li key="d">d</li>
-          <li key="e">e</li>
-          <li key="a">a</li>
-          <li key="b">b</li>
           <li key="c">c</li>
+          <li key="b">b</li>
+          <li key="a">a</li>
         </ul>`).call(new Vue()))
     }, 1000)
   </script>
