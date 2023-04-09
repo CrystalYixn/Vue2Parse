@@ -7,7 +7,7 @@
   <title>Document</title>
 </head>
 <body>
-  <ul id="app"></ul>
+  <!-- <ul id="app"></ul> -->
   <script src="./parseHtml.js"></script>
   <script src="./codeGen.js"></script>
   <script src="./miniVue.js"></script>
@@ -18,16 +18,16 @@
         <li key="b">b</li>
         <li key="c">c</li>
         <li key="d">d</li>
-      </ul>`).call(new Vue({ el: '#app' }))
+      </ul>`).call(new Vue())
     document.body.append(createElm(preVnode))
 
     setTimeout(() => {
       patch(preVnode, compileToFunction(`
         <ul>
-          <li key="d">d</li>
-          <li key="c">c</li>
           <li key="b">b</li>
-          <li key="a">a</li>
+          <li key="x">x</li>
+          <li key="d">d</li>
+          <li key="v">v</li>
         </ul>`).call(new Vue()))
     }, 1000)
   </script>

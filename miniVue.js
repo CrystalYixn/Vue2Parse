@@ -129,6 +129,7 @@ function isSameNode(oldNode, vnode) {
 
 // 创建真实DOM元素
 function createElm(vnode) {
+  console.log('createElm')
   let { tag, children, text } = vnode
   if (tag) {
     vnode.el = document.createElement(tag)
@@ -153,6 +154,8 @@ function patchVNode(oldNode, vnode) {
   }
   const oldChildren = oldNode.children || []
   const children = vnode.children || []
+
+  const map = Object.fromEntries(oldChildren.map((i, idx) => [i.data?.key, idx]))
   // 旧列表头尾双指针
   let oldStartIndex = 0
   let oldEndIndex = oldChildren.length - 1
@@ -165,8 +168,13 @@ function patchVNode(oldNode, vnode) {
   let endNode = children[endIndex]
   // 判断完所有新元素或判断完所有旧元素则循环终止
   while(oldStartIndex <= oldEndIndex && startIndex <= endIndex) {
-    // push情况
-    if (isSameNode(oldStartNode, startNode)) {
+    // 如果元素已被移动则跳至下一个
+    if (!oldStartNode) {
+      oldStartNode = oldChildren[++oldStartIndex]
+    } else if (!oldEndNode) {
+      oldEndNode = oldChildren[--oldEndIndex]
+    } else if (isSameNode(oldStartNode, startNode)) {
+      // push情况
       oldStartNode = oldChildren[++oldStartIndex]
       startNode = children[++startIndex]
     } else if (isSameNode(oldEndNode, endNode)) {
@@ -179,9 +187,19 @@ function patchVNode(oldNode, vnode) {
       endNode = children[--endIndex]
     } else if (isSameNode(oldEndNode, startNode)) {
       // 为什么需要相似的头尾与尾头比较? ——在sort情况下可能出现某个头元素移动到末尾的情况时与顺序比对结合使用能得出最少的更新方式
-      // a b c d -> b c d a
+      // a b c d ->  b x d v
       el.insertBefore(oldEndNode.el, oldStartNode.el)
       oldEndNode = oldChildren[--oldEndIndex]
+      startNode = children[++startIndex]
+    } else if (startNode.data?.key in map) {
+      const moveIndex = map[startNode.data?.key]
+      const moveNode = oldChildren[moveIndex]
+      el.insertBefore(moveNode.el, oldStartNode.el)
+      // 标识旧列表中原先顺序位置的元素已被移动
+      oldChildren[moveIndex] = undefined
+      startNode = children[++startIndex]
+    } else {
+      el.insertBefore(createElm(startNode), oldStartNode.el)
       startNode = children[++startIndex]
     }
   }
@@ -205,8 +223,11 @@ function patchVNode(oldNode, vnode) {
   }
   // 遍历所有未判断到的旧列表元素, 需要移除元素
   if (oldStartIndex <= oldEndIndex) {
-    for (let i = startIndex; i <= oldEndIndex; i++) {
-      el.removeChild(oldChildren[i].el)
+    for (let i = oldStartIndex; i <= oldEndIndex; i++) {
+      const node = oldChildren[i]
+      if (node) {
+        el.removeChild(node.el)
+      }
     }
   }
   return el
