@@ -14,6 +14,15 @@ LIFECYCLE.forEach(hook => strats[hook] = function(p, c) {
     return p
   }
 })
+strats.components = function(parentVal, childVal) {
+  const res = Object.create(parentVal)
+  if (childVal) {
+    for (const key in childVal) {
+      res[key] = childVal[key]
+    }
+  }
+  return res
+}
 export function mergeOptions(parent, child) {
   const options = {}
   for (let key in parent) {

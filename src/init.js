@@ -1,5 +1,5 @@
 import { initState } from "./state"
-import { compileToFunciton } from "./compiler/index"
+import { compileToFunction } from "./compiler/index"
 import { callHook, mountComponent } from "./lifecycle"
 import { mergeOptions } from "./utils"
 
@@ -26,7 +26,7 @@ export function initMixin(Vue) {
       } else if (el) {
         template = el.outerHTML
       }
-      ops.render = compileToFunciton(template)
+      ops.render = compileToFunction(template)
     }
     mountComponent(vm, el)
   }

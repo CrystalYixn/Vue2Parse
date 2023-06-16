@@ -2,7 +2,7 @@ import { parseHTML } from "./parse";
 // 匹配 mustach 语法
 const defaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g
 
-export function compileToFunciton(template) {
+export function compileToFunction(template) {
   // 1. 解析 Ast
   let ast = parseHTML(template)
   // 2. 生成 render 函数

@@ -17,7 +17,13 @@ export function mountComponent(vm, el) {
 export function initLifecycle(Vue) {
   Vue.prototype._update = function(vnode) {
     const el = this.$el
-    this.$el = patch(el, vnode)
+    const preVnode = this.vnode
+    this.vnode = vnode
+    if (preVnode) {
+      this.$el = patch(preVnode, vnode)
+    } else {
+      this.$el = patch(el, vnode)
+    }
   }
   Vue.prototype._render = function() {
     return this.$options.render.call(this)
