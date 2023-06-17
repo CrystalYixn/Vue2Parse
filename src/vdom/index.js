@@ -19,6 +19,15 @@ function createComponentVnode(vm, tag, key, data, children, Ctor) {
   if (typeof Ctor === 'object') {
     Ctor = vm.$options._base.extend(Ctor)
   }
+  // 手动增加一个attribute, 方便在patch时回调
+  data.hook = {
+    init(vnode) {
+      // 在vnode上增加一个属性保存组件实例
+      let instance = vnode.componentInstance = new vnode.componentOptions.Ctor
+      // 在实例的$el上保存组件对应的真实dom
+      instance.$mount()
+    }
+  }
   return vnode(vm, tag, key, data, children, null, { Ctor })
 }
 
