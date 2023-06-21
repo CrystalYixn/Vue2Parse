@@ -2,7 +2,8 @@ import { isSameVnode } from "./index"
 
 /* 初始化与更新 */
 export function patch(oldVNode, vnode) {
-  // 自定义组件挂载
+  // 没有oldVnode时一定为组件初始化
+  // 普通挂载oldVnode为真实元素, 更新时oldVnode为vnode
   if (!oldVNode) {
     return createElm(vnode)
   }
@@ -20,11 +21,13 @@ export function patch(oldVNode, vnode) {
   }
 }
 
+// 创建组件节点时回调初始化函数
 function createComponent(vnode) {
   let i = vnode.data
   if ((i = i.hook) && (i = i.init)) {
     i(vnode)
   }
+  // 回调函数执行成功后会挂载属性
   if (vnode.componentInstance) {
     return true
   }
@@ -34,6 +37,7 @@ function createComponent(vnode) {
 export function createElm(vnode) {
   let { tag, data, children, text } = vnode
   if (typeof tag === 'string') {
+    // 创建元素节点时增加创建组件节点的判断
     if (createComponent(vnode)) { return vnode.componentInstance.$el }
     vnode.el = document.createElement(tag) // 放在 vnode 上为后续 diff 算法做对比使用
     patchProps(vnode.el, {}, data)
