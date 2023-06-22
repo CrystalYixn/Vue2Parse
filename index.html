@@ -7,22 +7,22 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="root"></div>
+  <div id="root">{{ age.b }}</div>
   <script src="./dist/vue.js"></script>
   <script>
-    Vue.component('my-button', {
-      template: '<button>全局button</button>'
+    const app = new Vue({
+      el: '#root',
+      data: {
+        age: {
+          a: 1
+        }
+      }
     })
-    let Sub = Vue.extend({
-      // template: '<button>声明组件</button>',
-      template: '<button>子组件<my-button /></button>',
-      // components: {
-      //   'my-button': {
-      //     template: '<button>子组件button</button>'
-      //   }
-      // }
-    })
-    new Sub().$mount('#root')
+    setTimeout(() => {
+      // app.age.b = 2
+      // app.age.__ob__.dep.notify()
+      app.$set(app.age, 'b', 2)
+    }, 1000);
   </script>
 </body>
 </html>

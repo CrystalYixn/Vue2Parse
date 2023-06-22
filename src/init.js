@@ -2,6 +2,7 @@ import { initState } from "./state"
 import { compileToFunction } from "./compiler/index"
 import { callHook, mountComponent } from "./lifecycle"
 import { mergeOptions } from "./utils"
+import { defineReactive } from "./observe/index"
 
 export function initMixin(Vue) {
   Vue.prototype._init = function(options) {
@@ -29,5 +30,13 @@ export function initMixin(Vue) {
       template && (ops.render = compileToFunction(template))
     }
     mountComponent(vm, el)
+  }
+
+  Vue.prototype.$set = function(target, key, val) {
+    target[key] = val
+    if (typeof val === 'object') {
+      defineReactive(val)
+    }
+    target.__ob__.dep.notify()
   }
 }
