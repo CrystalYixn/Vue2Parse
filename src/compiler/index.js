@@ -6,17 +6,37 @@ export function compileToFunction(template) {
   // 1. 解析 Ast
   let ast = parseHTML(template)
   // 2. 生成 render 函数
-  let code = codegen(ast)
+  let code = genElement(ast)
   code = `with(this){return ${code}}`
   let render = new Function(code)
   return render
 }
 
 /** ast转为字符串 */
-function codegen(ast) {
+function genElement(ast) {
+  if (ast.if && !ast.ifProcessed) {
+    return genIf(ast)
+  }
   let children = genChildren(ast.children)
   let code = `_c('${ast.tag}', ${ ast.attrs.length ? genProps(ast.attrs) : 'null' }${ ast.children.length ? `, ${children}` : '' })`
   return code
+}
+
+/**  */
+function genIf(ast) {
+  ast.ifProcessed = true
+  if (!ast.ifConditions.length) return `_v('')`
+  const condition = ast.ifConditions.shift()
+  // v-if=表达式需要递归
+  if (condition.exp) {
+    return `(${condition.exp})?${
+      genElement(condition.block)
+    }:${
+      genIf(ast)
+    }`
+  } else {
+    return `${genElement(condition.block)}`
+  }
 }
 
 /** 返回形如 { id:'app', style: {margin: 'top'} }的字符串 */
@@ -47,7 +67,7 @@ function genChildren(children) {
 /** 根据nodeType返回形如 '_v("年龄:"+_s(age))' 的字符串 */
 function gen(node) {
   if (node.type === 1) {
-    return codegen(node)
+    return genElement(node)
   } else {
     const { text } = node
     if (defaultTagRE.test(text)) {

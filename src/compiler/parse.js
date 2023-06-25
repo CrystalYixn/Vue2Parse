@@ -69,6 +69,7 @@ export function parseHTML(html) {
   /*  */
   function start(tag, attrs, text) {
     const node = createAstElement(...arguments)
+    processIf(node)
     if (!root) {
       root = node
     }
@@ -102,6 +103,32 @@ export function parseHTML(html) {
         i.value = JSON.stringify(value)
       }
     })
+  }
+
+  function processIf(node) {
+    const exp = getAndRemoveAttr(node, 'v-if')
+    if (exp) {
+      node.if = exp
+      if (!node.ifConditions) {
+        node.ifConditions = []
+      }
+      node.ifConditions.push({
+        exp,
+        block: node
+      })
+    }
+  }
+
+  function getAndRemoveAttr(node, name, removeFromMap) {
+    let vifIndex = node.attrs.findIndex(i => i.name === name)
+    let val
+    if (vifIndex > -1) {
+      val = node.attrs[vifIndex].value
+      if (removeFromMap) {
+        node.attrs.splice(vifIndex, 1)
+      }
+    }
+    return val
   }
 
   /* 处理开始标签 */
