@@ -25,12 +25,36 @@ function createComponentVnode(vm, tag, key, data, children, ctor) {
   data.hook = {
     init(vnode) {
       // 在vnode上增加一个属性保存组件实例
-      let instance = vnode.componentInstance = new vnode.componentOptions.ctor
+      let instance = vnode.componentInstance = new vnode.componentOptions.ctor({
+        _isComponent: true,
+        _parentVnode: vnode,
+      })
       // 在实例的$el上保存组件对应的真实dom
       instance.$mount()
+    },
+    prepatch(propsData, oldVnode, vnode) {
+      const vm = vnode.componentInstance = oldVnode.componentInstance
+      for (const key in propsData) {
+        vm._props[key] = propsData[key]
+      }
     }
   }
-  return vnode(vm, tag, key, data, children, null, { ctor })
+  const propsData = extractPropsFromVnodeData(data, ctor)
+  return vnode(vm, tag, key, data, children, null, { ctor, propsData })
+}
+
+/** 分离props和attrs */
+function extractPropsFromVnodeData(data, Ctor) {
+  const res = {}
+  const propKeys = Ctor.options.props || []
+  if (!propKeys.length) return
+  propKeys.forEach(k => {
+    if (k in data) {
+      res[k] = data[k]
+      delete data[k]
+    }
+  })
+  return res
 }
 
 /** 创建虚拟文本节点 */

@@ -72,7 +72,13 @@ class Watcher {
 }
 
 function flushScheduleQueue() {
-  queue.forEach(watcher => watcher.run())
+  // 不要使用 foreach 因为会有缓存, 在 watcher run 的过程中可能会动态追加 watcher
+  // 只有实时访问 queue.length 才能拿到真实长度
+  // queue.forEach(watcher => watcher.run())
+  for (let i = 0; i < queue.length; ++i) {
+    const watcher = queue[i]
+    watcher.run()
+  }
   queue = []
   has = {}
   pending = false
@@ -86,6 +92,8 @@ function queueWatcher(watcher) {
 
     if (!pending) {
       nextTick(flushScheduleQueue, 0);
+      // 同步方便调试
+      // flushScheduleQueue()
       pending = true
     }
   }

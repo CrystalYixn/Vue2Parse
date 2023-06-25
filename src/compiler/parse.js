@@ -6,6 +6,8 @@ const qnameCapture = `((?:${ncname}\\:)?${ncname})`
 const startTagOpen = new RegExp(`^<${qnameCapture}`)
 // 匹配一个结束标签
 const endTag = new RegExp(`^<\\/${qnameCapture}[^>]*>`)
+/** 匹配绑定属性或事件或修饰符 */
+const dirRE = /^v-|^@|^:|^\./
 // 匹配属性，支持不带值或者单引号或者不带引号外的内容
 const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
 // 匹配开始标签对应的结束标签，支持自闭合标签
@@ -84,7 +86,22 @@ export function parseHTML(html) {
 
   /*  */
   function end() {
+    const node = stack[stack.length - 1]
+    processAttrs(node)
     stackPop()
+  }
+
+  function processAttrs(node) {
+    const { attrs = [] } = node
+    attrs.forEach(i => {
+      const { name, value } = i
+      if (dirRE.test(name)) {
+        const pureName = name.replace(dirRE, '')
+        i.name = pureName
+      } else {
+        i.value = JSON.stringify(value)
+      }
+    })
   }
 
   /* 处理开始标签 */

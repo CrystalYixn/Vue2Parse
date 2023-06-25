@@ -38,7 +38,7 @@ export function createElm(vnode) {
   let { tag, data, children, text } = vnode
   if (typeof tag === 'string') {
     // 创建元素节点时增加创建组件节点的判断
-    if (createComponent(vnode)) { return vnode.componentInstance.$el }
+    if (createComponent(vnode)) return (vnode.el = vnode.componentInstance.$el)
     vnode.el = document.createElement(tag) // 放在 vnode 上为后续 diff 算法做对比使用
     patchProps(vnode.el, {}, data)
     // children.forEach(child => vnode.el.appendChild(createElm(child)))
@@ -93,6 +93,7 @@ function patchVnode(oldVNode, vnode) {
       oldVNode.el.textContent = vnode.text
     }
   }
+  vnode.data?.hook?.prepatch(vnode.componentOptions.propsData, oldVNode, vnode)
   patchProps(el, oldVNode.data, vnode.data)
   const oldChildren = oldVNode.children || []
   const newChildren = vnode.children || []

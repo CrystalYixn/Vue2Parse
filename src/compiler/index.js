@@ -31,7 +31,7 @@ function genProps(attrs) {
         return preVal
       }, {})
     }
-    str += `${attr.name}:${JSON.stringify(attr.value)},`
+    str += `${attr.name}:${attr.value},`
   })
   // 去除末尾逗号
   return `{${str.slice(0, -1)}}`

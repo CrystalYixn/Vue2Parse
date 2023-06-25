@@ -1,18 +1,16 @@
 import Dep from "./observe/dep"
-import { observe } from "./observe/index"
+import { defineReactive, observe } from "./observe/index"
 import Watcher, { nextTick } from "./observe/watcher"
 
 export function initState(vm) {
   const opts = vm.$options
-  if (opts.data) {
-    initData(vm)
-  }
-  if (opts.computed) {
-    initComputed(vm)
-  }
-  if (opts.watch) {
-    initWatch(vm)
-  }
+  // 初始化组件, 包括从父亲继承来的props
+  if (opts._isComponent) initInternalComponent(vm, opts)
+  // 初始化props, 变为响应式
+  if (opts.props) initProps(vm)
+  if (opts.data) initData(vm)
+  if (opts.computed) initComputed(vm)
+  if (opts.watch) initWatch(vm)
 }
 
 function proxy(vm, target, key) {
@@ -24,6 +22,23 @@ function proxy(vm, target, key) {
       vm[target][key] = val
     }
   })
+}
+
+function initInternalComponent(vm, options) {
+  // 定义propsData存储解析的数据, props则用于记录用户的传入选项
+  // _parentVnode指向的是父级, 因为tag:my
+  vm.$options.propsData = options._parentVnode.componentOptions.propsData
+}
+
+function initProps(vm) {
+  const propsData = vm.$options.propsData || {}
+  // vm._props用作私有属性代理屏蔽层
+  const props = vm._props = {}
+  for (const key in propsData) {
+    const value = propsData[key]
+    defineReactive(props, key, value)
+    proxy(vm, '_props', key)
+  }
 }
 
 function initWatch(vm) {

@@ -7,22 +7,26 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="root">{{ age.b }}</div>
+  <div id="app"><my :age="age" name="name" /></div>
   <script src="./dist/vue.js"></script>
   <script>
-    const app = new Vue({
-      el: '#root',
+    const vm = new Vue({
+      el: '#app',
       data: {
-        age: {
-          a: 1
+        age: 18,
+      },
+      components: {
+        my: {
+          props: ['age'],
+          template: '<button>子组件{{age}}</button>',
         }
-      }
+      },
+      created() {
+        setTimeout(() => {
+          this.age = 22
+        }, 1500)
+      },
     })
-    setTimeout(() => {
-      // app.age.b = 2
-      // app.age.__ob__.dep.notify()
-      app.$set(app.age, 'b', 2)
-    }, 1000);
   </script>
 </body>
 </html>
