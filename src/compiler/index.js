@@ -14,12 +14,23 @@ export function compileToFunction(template) {
 
 /** ast转为字符串 */
 function genElement(ast) {
-  if (ast.if && !ast.ifProcessed) {
+  if (ast.for && !ast.forProcessed) {
+    return genFor(ast)
+  } else if (ast.if && !ast.ifProcessed) {
     return genIf(ast)
   }
   let children = genChildren(ast.children)
   let code = `_c('${ast.tag}', ${ ast.attrs.length ? genProps(ast.attrs) : 'null' }${ ast.children.length ? `, ${children}` : '' })`
   return code
+}
+
+/**  */
+function genFor(ast) {
+  ast.forProcessed = true
+  // 此处跟vue不同, vue调用函数传递的是children数组, 此处需要展开以便createElementVNode接收
+  return `..._l((${ast.for}), function(${ast.alias}) {
+    return ${genElement(ast)}
+  })`
 }
 
 /**  */

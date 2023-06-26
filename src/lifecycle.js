@@ -44,6 +44,18 @@ export function initLifecycle(Vue) {
       return value
     }
   }
+  /** 创建 mustache 内容 */
+  Vue.prototype._l = renderList
+  function renderList(val, render) {
+    let ret = []
+    if (typeof val === 'number') {
+      ret = new Array(val)
+      for (let i = 0; i < val; i++) {
+        ret[i] = render(i + 1, i)
+      }
+    }
+    return ret
+  }
 }
 
 export function callHook(vm, hook) {

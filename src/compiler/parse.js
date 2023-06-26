@@ -8,6 +8,8 @@ const startTagOpen = new RegExp(`^<${qnameCapture}`)
 const endTag = new RegExp(`^<\\/${qnameCapture}[^>]*>`)
 /** 匹配绑定属性或事件或修饰符 */
 const dirRE = /^v-|^@|^:|^\./
+/** 匹配for表达式 */
+const forAliasRE = /([\s\S]*?)\s+(?:in|of)\s+([\s\S]*)/
 // 匹配属性，支持不带值或者单引号或者不带引号外的内容
 const attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
 // 匹配开始标签对应的结束标签，支持自闭合标签
@@ -69,6 +71,7 @@ export function parseHTML(html) {
   /*  */
   function start(tag, attrs, text) {
     const node = createAstElement(...arguments)
+    processFor(node)
     processIf(node)
     if (!root) {
       root = node
@@ -105,8 +108,19 @@ export function parseHTML(html) {
     })
   }
 
+  function processFor(node) {
+    const exp = getAndRemoveAttr(node, 'v-for', true)
+    if (exp) {
+      const matchRes = exp.match(forAliasRE)
+      if (!matchRes) return
+      node.for = matchRes[2].trim()
+      const alias = matchRes[1].trim()
+      node.alias = alias
+    }
+  }
+
   function processIf(node) {
-    const exp = getAndRemoveAttr(node, 'v-if')
+    const exp = getAndRemoveAttr(node, 'v-if', true)
     if (exp) {
       node.if = exp
       if (!node.ifConditions) {
@@ -120,12 +134,12 @@ export function parseHTML(html) {
   }
 
   function getAndRemoveAttr(node, name, removeFromMap) {
-    let vifIndex = node.attrs.findIndex(i => i.name === name)
+    let nameIndex = node.attrs?.findIndex(i => i.name === name)
     let val
-    if (vifIndex > -1) {
-      val = node.attrs[vifIndex].value
+    if (nameIndex > -1) {
+      val = node.attrs[nameIndex].value
       if (removeFromMap) {
-        node.attrs.splice(vifIndex, 1)
+        node.attrs.splice(nameIndex, 1)
       }
     }
     return val
