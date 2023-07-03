@@ -6,12 +6,16 @@ let has = {}
 let pending = false
 
 class Watcher {
-  constructor(vm, expOrFn, options, cb) {
-    this.id = id++
+  constructor(vm, expOrFn, cb, options, isRenderWatcher) {
     this.vm = vm
-    this.renderWatcher = options
-    this.lazy = options.lazy
-    this.user = options.user
+    if (isRenderWatcher) {
+      vm._watcher = this
+    }
+    this.id = id++
+    if (options) {
+      this.lazy = options.lazy
+      this.user = options.user
+    }
     this.dirty = this.lazy
     if (typeof expOrFn === 'string') {
       this.getter = function() {

@@ -11,7 +11,7 @@ export function mountComponent(vm, el) {
     // 3. 根据虚拟 DOM 产生真实 DOM，插入到 el 元素中
     vm._update(vnode)
   }
-  new Watcher(vm, updateComponent, true)
+  new Watcher(vm, updateComponent, null, null, true)
 }
 
 export function initLifecycle(Vue) {
@@ -35,6 +35,12 @@ export function initLifecycle(Vue) {
   }
   Vue.prototype._v = function() {
     return createTextVNode(this, ...arguments)
+  }
+  Vue.prototype.$forceUpdate = function () {
+    const vm = this
+    if (vm._watcher) {
+      vm._watcher.update()
+    }
   }
   /** 创建 mustache 内容 */
   Vue.prototype._s = function(value) {

@@ -79,7 +79,7 @@ function initComputed(vm) {
   for (const key in computed) {
     let userDef = computed[key]
     const fn = typeof userDef === 'function' ? userDef : userDef.get
-    watchers[key] = new Watcher(vm, fn, { lazy: true })
+    watchers[key] = new Watcher(vm, fn, null, { lazy: true })
     defineComputed(vm, key, userDef)
   }
 }
@@ -108,7 +108,7 @@ function createComputedGetter(key) {
 
 export function initStateMixin(Vue) {
   Vue.prototype.$watch = function(expOrFn, cb, options = {}) {
-    new Watcher(this, expOrFn, { user: true }, cb)
+    new Watcher(this, expOrFn, cb, { user: true })
   }
   Vue.prototype.$nextTick = nextTick
 }
