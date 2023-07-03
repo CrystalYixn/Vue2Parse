@@ -11,21 +11,31 @@ export function createElementVNode(vm, tag, attr, ...children) {
   if (isReservedTag(tag)) {
     return vnode(vm, tag, key, attr, children)
   } else {
-    const ctor = vm.$options.components[tag]
-    return createComponentVnode(vm, tag, key, attr, children, ctor)
+    const Ctor = vm.$options.components[tag]
+    return createComponentVnode(vm, tag, key, attr, children, Ctor)
   }
 }
 
-function createComponentVnode(vm, tag, key, data, children, ctor) {
-  if (typeof ctor === 'object') {
-    ctor = vm.$options._base.extend(ctor)
+function createComponentVnode(vm, tag, key, data, children, Ctor) {
+  if (typeof Ctor === 'object') {
+    Ctor = vm.$options._base.extend(Ctor)
+  }
+
+  let asyncFactory
+  // 异步组件没有cid
+  if (typeof Ctor.cid === 'undefined') {
+    asyncFactory = Ctor
+    Ctor = resolveAsyncComponent(asyncFactory)
+    if (typeof Ctor === 'undefined') {
+      return createTextVNode(vm, '')
+    }
   }
   // FIXME 此处不是覆盖了DOM上的hook属性？
   // 手动增加一个attribute, 方便在patch时回调
   data.hook = {
     init(vnode) {
       // 在vnode上增加一个属性保存组件实例
-      let instance = vnode.componentInstance = new vnode.componentOptions.ctor({
+      let instance = vnode.componentInstance = new vnode.componentOptions.Ctor({
         _isComponent: true,
         _parentVnode: vnode,
       })
@@ -39,8 +49,37 @@ function createComponentVnode(vm, tag, key, data, children, ctor) {
       }
     }
   }
-  const propsData = extractPropsFromVnodeData(data, ctor)
-  return vnode(vm, tag, key, data, children, null, { ctor, propsData })
+
+  function resolveAsyncComponent(factory) {
+    if (factory.resolved) {
+      return factory.resolved
+    }
+
+    const contexts = factory.contexts = [vm]
+    const res = factory()
+    // promise
+    if (typeof res.then) {
+      if (typeof factory.resolved === 'undefined') {
+        res.then(resolve, err => { console.log(err) })
+      }
+    }
+
+    function resolve(res) {
+      factory.resolved = vm.$options._base.extend(res)
+      forceRender()
+    }
+
+    function forceRender() {
+      for (let i = 0, l = contexts.length; i < l; i++) {
+        contexts[i].$forceUpdate()
+      }
+    }
+
+    return factory.resolved
+  }
+  
+  const propsData = extractPropsFromVnodeData(data, Ctor)
+  return vnode(vm, tag, key, data, children, null, { Ctor, propsData })
 }
 
 /** 分离props和attrs */

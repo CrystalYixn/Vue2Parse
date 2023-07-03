@@ -1,6 +1,9 @@
 import { mergeOptions } from "./utils"
 
 export function initGlobalAPI(Vue) {
+  Vue.cid = 0
+  let cid = 1
+
   Vue.options = {
     _base: Vue
   }
@@ -18,6 +21,7 @@ export function initGlobalAPI(Vue) {
     Sub.prototype = Object.create(Vue.prototype)
     // 更改的是空对象的constructor属性，而不是空对象的原型上的
     Sub.prototype.constructor = Sub
+    Sub.cid = cid++
     Sub.options = mergeOptions(Vue.options, options)
     return Sub
   }
