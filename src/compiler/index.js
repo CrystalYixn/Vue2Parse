@@ -20,7 +20,7 @@ function genElement(ast) {
     return genIf(ast)
   }
   let children = genChildren(ast.children)
-  let code = `_c('${ast.tag}', ${ ast.attrs.length ? genProps(ast.attrs) : 'null' }${ ast.children.length ? `, ${children}` : '' })`
+  let code = `_c('${ast.tag}', ${genData(ast)}${ ast.children.length ? `, ${children}` : '' })`
   return code
 }
 
@@ -48,6 +48,30 @@ function genIf(ast) {
   } else {
     return `${genElement(condition.block)}`
   }
+}
+
+function genData(ast) {
+  let data = '{'
+  if (ast.attrs.length) {
+    data += `attrs:${genProps(ast.attrs)},`
+  }
+  if (ast.events) {
+    data += `${genHandlers(ast.events)},`
+  }
+  data += '}'
+  return data
+}
+
+/** 返回形如 on:{"click":myMethod} 的字符串 */
+function genHandlers(events) {
+  const prefix = 'on:'
+  let staticHandlers = ''
+  for (const name in events) {
+    const handlerCode = events[name].value
+    staticHandlers += `"${name}":${handlerCode},`
+  }
+  staticHandlers = `{${staticHandlers.slice(0, -1)}}`
+  return prefix + staticHandlers
 }
 
 /** 返回形如 { id:'app', style: {margin: 'top'} }的字符串 */

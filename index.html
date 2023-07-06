@@ -7,24 +7,15 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="app"><my />{{ say() }}</div>
+  <div id="app"><button @click="clickHandler">按钮</button></div>
   <script src="./dist/vue.js"></script>
   <script>
     const app = new Vue({
       el: '#app',
       methods: {
-        say() {
-          console.log('hh')
+        clickHandler() {
+          console.log('我被点击了')
         }
-      },
-      components: {
-        my: () => new Promise((resolve) => {
-          setTimeout(() => {
-            resolve({
-              template: '<button>我是异步组件</button>'
-            })
-          }, 2000)
-        })
       }
     })
   </script>

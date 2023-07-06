@@ -1,5 +1,9 @@
 import { isSameVnode } from "./index"
 
+let cbs = {
+  create: [updateDOMListeners]
+}
+
 /* 初始化与更新 */
 export function patch(oldVNode, vnode) {
   // 没有oldVnode时一定为组件初始化
@@ -40,16 +44,31 @@ export function createElm(vnode) {
     // 创建元素节点时增加创建组件节点的判断
     if (createComponent(vnode)) return (vnode.el = vnode.componentInstance.$el)
     vnode.el = document.createElement(tag) // 放在 vnode 上为后续 diff 算法做对比使用
-    patchProps(vnode.el, {}, data)
-    // children.forEach(child => vnode.el.appendChild(createElm(child)))
+    patchProps(vnode.el, {}, data.attrs)
     children.forEach(child => {
       const element = createElm(child)
       vnode.el.appendChild(element)
     })
+    if (data) {
+      invokeCreateHooks(vnode)
+    }
   } else {
     vnode.el = document.createTextNode(text)
   }
   return vnode.el
+
+  function invokeCreateHooks(vnode) {
+    for (let i = 0;i < cbs.create.length; i++) {
+      cbs.create[i](vnode)
+    }
+  }
+}
+
+function updateDOMListeners(vnode) {
+  const { on } = vnode.data
+  for (const name in on) {
+    vnode.el.addEventListener(name, on[name])
+  }
 }
 
 /* 将所有属性设置到DOM元素上 */

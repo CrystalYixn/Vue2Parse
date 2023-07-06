@@ -8,6 +8,8 @@ const startTagOpen = new RegExp(`^<${qnameCapture}`)
 const endTag = new RegExp(`^<\\/${qnameCapture}[^>]*>`)
 /** 匹配绑定属性或事件或修饰符 */
 const dirRE = /^v-|^@|^:|^\./
+/** 匹配绑定事件 */
+const onRE = /^@|^v-on:/
 /** 匹配for表达式 */
 const forAliasRE = /([\s\S]*?)\s+(?:in|of)\s+([\s\S]*)/
 // 匹配属性，支持不带值或者单引号或者不带引号外的内容
@@ -100,8 +102,15 @@ export function parseHTML(html) {
     attrs.forEach(i => {
       const { name, value } = i
       if (dirRE.test(name)) {
-        const pureName = name.replace(dirRE, '')
-        i.name = pureName
+        if (onRE.test(name)) {
+          i.name = name.replace(onRE, '')
+          let events = node.events || (node.events = {})
+          events[i.name] = {
+            value: i.value
+          }
+        } else {
+          i.name = name.replace(dirRE, '')
+        }
       } else {
         i.value = JSON.stringify(value)
       }

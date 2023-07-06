@@ -2,17 +2,15 @@ const isReservedTag = (tag) => {
   return ['a', 'div', 'p', 'button', 'ul', 'li', 'span'].includes(tag)
 }
 /** 创建虚拟元素节点 */
-export function createElementVNode(vm, tag, attr, ...children) {
-  if (attr == null) {
-    attr = {}
-  }
-  const { key } = attr
-  key && delete attr.key
+export function createElementVNode(vm, tag, data, ...children) {
+  const { attr: attrs = {} } = data
+  const { key } = attrs
+  key && delete attrs.key
   if (isReservedTag(tag)) {
-    return vnode(vm, tag, key, attr, children)
+    return VNode(vm, tag, key, data, children)
   } else {
     const Ctor = vm.$options.components[tag]
-    return createComponentVnode(vm, tag, key, attr, children, Ctor)
+    return createComponentVnode(vm, tag, key, data, children, Ctor)
   }
 }
 
@@ -79,7 +77,7 @@ function createComponentVnode(vm, tag, key, data, children, Ctor) {
   }
   
   const propsData = extractPropsFromVnodeData(data, Ctor)
-  return vnode(vm, tag, key, data, children, null, { Ctor, propsData })
+  return VNode(vm, tag, key, data, children, null, { Ctor, propsData })
 }
 
 /** 分离props和attrs */
@@ -98,10 +96,10 @@ function extractPropsFromVnodeData(data, Ctor) {
 
 /** 创建虚拟文本节点 */
 export function createTextVNode(vm, text) {
-  return vnode(vm, undefined, undefined, undefined, undefined, text)
+  return VNode(vm, undefined, undefined, undefined, undefined, text)
 }
 
-function vnode(vm, tag, key, data, children, text, componentOptions) {
+function VNode(vm, tag, key, data, children, text, componentOptions) {
   return {
     vm,
     tag,
