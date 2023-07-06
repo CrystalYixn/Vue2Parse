@@ -7,11 +7,16 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="app"><my /></div>
+  <div id="app"><my />{{ say() }}</div>
   <script src="./dist/vue.js"></script>
   <script>
     const app = new Vue({
       el: '#app',
+      methods: {
+        say() {
+          console.log('hh')
+        }
+      },
       components: {
         my: () => new Promise((resolve) => {
           setTimeout(() => {

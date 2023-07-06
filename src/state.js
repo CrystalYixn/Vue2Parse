@@ -8,6 +8,7 @@ export function initState(vm) {
   if (opts._isComponent) initInternalComponent(vm, opts)
   // 初始化props, 变为响应式
   if (opts.props) initProps(vm)
+  if (opts.methods) initMethods(vm, opts.methods)
   if (opts.data) initData(vm)
   if (opts.computed) initComputed(vm)
   if (opts.watch) initWatch(vm)
@@ -28,6 +29,12 @@ function initInternalComponent(vm, options) {
   // 定义propsData存储解析的数据, props则用于记录用户的传入选项
   // _parentVnode指向的是父级, 因为tag:my
   vm.$options.propsData = options._parentVnode.componentOptions.propsData
+}
+
+function initMethods(vm, methods) {
+  for (const key in methods) {
+    vm[key] = methods[key].bind(vm)
+  }
 }
 
 function initProps(vm) {
