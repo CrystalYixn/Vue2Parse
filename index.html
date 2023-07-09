@@ -7,14 +7,22 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="app"><button @click="clickHandler">按钮</button></div>
+  <div id="app"><my @event="eventHandler"></my></div>
   <script src="./dist/vue.js"></script>
   <script>
     const app = new Vue({
       el: '#app',
       methods: {
-        clickHandler() {
-          console.log('我被点击了')
+        eventHandler() {
+          console.log('我被触发了')
+        }
+      },
+      components: {
+        my: {
+          template: '<button>点我啊</button>',
+          created() {
+            this.$emit('event')
+          },
         }
       }
     })

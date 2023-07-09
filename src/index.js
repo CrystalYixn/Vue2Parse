@@ -1,15 +1,15 @@
-import { compileToFunction } from "./compiler/index"
 import { initGlobalAPI } from "./globalAPI"
 import { initMixin } from "./init"
+import { eventsMixin } from "./events"
 import { initLifecycle } from "./lifecycle"
 import { initStateMixin } from "./state"
-import { createElm, patch } from "./vdom/patch"
 
 function Vue(options) {
   this._init(options)
 }
 
 initMixin(Vue)
+eventsMixin(Vue)
 initLifecycle(Vue)
 initGlobalAPI(Vue)
 initStateMixin(Vue)

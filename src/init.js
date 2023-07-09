@@ -1,4 +1,5 @@
 import { initState } from "./state"
+import { initEvents } from "./events"
 import { compileToFunction } from "./compiler/index"
 import { callHook, mountComponent } from "./lifecycle"
 import { mergeOptions } from "./utils"
@@ -7,12 +8,27 @@ import { defineReactive } from "./observe/index"
 export function initMixin(Vue) {
   Vue.prototype._init = function(options) {
     const vm = this
-    vm.$options = mergeOptions(this.constructor.options, options) // 初始化时将用户选项挂载到实例上，方便其他扩展方法读取
+    // 初始化组件, 包括从父亲继承来的props, 此处的options可能是创建组件时的特殊对象而不是用户传入的标准对象
+    if (options._isComponent) {
+      initInternalComponent(vm, options)
+    } else {
+      vm.$options = mergeOptions(this.constructor.options, options)
+    }
+    initEvents(vm)
     callHook(vm, 'beforeCreate')
     initState(vm)
     callHook(vm, 'created')
     if (options.el) {
       vm.$mount(options.el)
+    }
+
+    function initInternalComponent(vm, options) {
+      // 定义propsData存储解析的数据, props则用于记录用户的传入选项
+      // _parentVnode指向的是自定义标签的vnode, 而当前vnode则是实际的标签vnode, 所以需要从父vnode上获取props等信息
+      const vnodeComponentOptions = options._parentVnode.componentOptions
+      const opts = vm.$options = vm.constructor.options
+      opts.propsData = vnodeComponentOptions.propsData
+      opts._parentListeners = vnodeComponentOptions.listeners
     }
   }
 

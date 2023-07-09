@@ -28,7 +28,8 @@ function createComponentVnode(vm, tag, key, data, children, Ctor) {
       return createTextVNode(vm, '')
     }
   }
-  // FIXME 此处不是覆盖了DOM上的hook属性？
+  const listeners = data.on
+  data.on = data.nativeOn
   // 手动增加一个attribute, 方便在patch时回调
   data.hook = {
     init(vnode) {
@@ -77,7 +78,7 @@ function createComponentVnode(vm, tag, key, data, children, Ctor) {
   }
   
   const propsData = extractPropsFromVnodeData(data, Ctor)
-  return VNode(vm, tag, key, data, children, null, { Ctor, propsData })
+  return VNode(vm, tag, key, data, children, null, { Ctor, propsData, listeners })
 }
 
 /** 分离props和attrs */

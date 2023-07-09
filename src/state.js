@@ -4,8 +4,6 @@ import Watcher, { nextTick } from "./observe/watcher"
 
 export function initState(vm) {
   const opts = vm.$options
-  // 初始化组件, 包括从父亲继承来的props
-  if (opts._isComponent) initInternalComponent(vm, opts)
   // 初始化props, 变为响应式
   if (opts.props) initProps(vm)
   if (opts.methods) initMethods(vm, opts.methods)
@@ -23,12 +21,6 @@ function proxy(vm, target, key) {
       vm[target][key] = val
     }
   })
-}
-
-function initInternalComponent(vm, options) {
-  // 定义propsData存储解析的数据, props则用于记录用户的传入选项
-  // _parentVnode指向的是父级, 因为tag:my
-  vm.$options.propsData = options._parentVnode.componentOptions.propsData
 }
 
 function initMethods(vm, methods) {
