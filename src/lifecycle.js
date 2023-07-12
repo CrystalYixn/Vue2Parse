@@ -12,6 +12,10 @@ export function mountComponent(vm, el) {
     vm._update(vnode)
   }
   new Watcher(vm, updateComponent, null, null, true)
+  if (!vm.$vnode) {
+    // 根组件调用
+    callHook(vm, 'mounted')
+  }
 }
 
 export function initLifecycle(Vue) {
@@ -28,7 +32,10 @@ export function initLifecycle(Vue) {
     }
   }
   Vue.prototype._render = function() {
-    return this.$options.render.call(this)
+    this.$vnode = this.$options._parentVnode
+    const vnode = this.$options.render.call(this)
+    vnode.parent = this.$vnode
+    return vnode 
   }
   Vue.prototype._c = function() {
     return createElementVNode(this, ...arguments)

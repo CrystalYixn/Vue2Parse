@@ -17,10 +17,14 @@
           console.log('我被触发了')
         }
       },
+      mounted() {
+        console.log('根组件mounted')
+      },
       components: {
         my: {
           template: '<button>点我啊</button>',
-          created() {
+          mounted() {
+            console.log('子组件mounted')
             this.$emit('event')
           },
         }

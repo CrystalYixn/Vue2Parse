@@ -4,49 +4,72 @@ let cbs = {
   create: [updateDOMListeners]
 }
 
-/* 初始化与更新 */
+/* 初始化与更新, 只有真实tag会进入patch */
 export function patch(oldVNode, vnode) {
-  // 没有oldVnode时一定为组件初始化
-  // 普通挂载oldVnode为真实元素, 更新时oldVnode为vnode
+  let isInitialPatch = false
+  const insertedVnodeQueue = []
+  // 没有oldVnode时一定为组件的tag初始化
   if (!oldVNode) {
-    return createElm(vnode)
-  }
-  const isRealElement = oldVNode.nodeType
-  // 视为初始化
-  if (isRealElement) {
-    const elm = oldVNode
-    const parentElm = elm.parentNode
-    const newElm = createElm(vnode)
-    parentElm.insertBefore(newElm, elm.nextSibling)
-    parentElm.removeChild(elm)
-    return newElm
+    isInitialPatch = true
+    createElm(vnode, insertedVnodeQueue)
   } else {
-    patchVnode(oldVNode, vnode)
+    // 普通挂载oldVnode为真实元素, 更新时oldVnode为vnode
+    const isRealElement = oldVNode.nodeType
+    // 视为初始化
+    if (isRealElement) {
+      const elm = oldVNode
+      const parentElm = elm.parentNode
+      const newElm = createElm(vnode, insertedVnodeQueue)
+      parentElm.insertBefore(newElm, elm.nextSibling)
+      parentElm.removeChild(elm)
+    } else {
+      patchVnode(oldVNode, vnode)
+    }
+  }
+  invokeInsertHook(vnode, insertedVnodeQueue, isInitialPatch)
+  return vnode.el
+}
+
+// 标准的栈结构, 子组件执行函数时添加自己到队列, 直到父组件真正初始化完成时全部出栈
+function invokeInsertHook(vnode, queue, isInit) {
+  // 是否为组件内部结构初始化时调用
+  if (isInit && vnode.parent) {
+    // vnode.parent.data.pendingInsert = queue
+  } else {
+    for (let i = 0; i < queue; i++) {
+      // 遍历子组件 insert 钩子
+      queue[i].data.hook.insert(queue[i])
+    }
   }
 }
 
 // 创建组件节点时回调初始化函数
-function createComponent(vnode) {
+function createComponent(vnode, insertedVnodeQueue) {
   let i = vnode.data
   if ((i = i.hook) && (i = i.init)) {
     i(vnode)
   }
   // 回调函数执行成功后会挂载属性
   if (vnode.componentInstance) {
+    // if (vnode.data.pendingInsert) {
+    //   insertedVnodeQueue.push(...vnode.data.pendingInsert)
+    //   vnode.data.pendingInsert = null
+    // }
+    insertedVnodeQueue.push(vnode)
     return true
   }
 }
 
 /* 根据vnode创建真实DOM */
-export function createElm(vnode) {
+export function createElm(vnode, insertedVnodeQueue) {
   let { tag, data, children, text } = vnode
   if (typeof tag === 'string') {
     // 创建元素节点时增加创建组件节点的判断
-    if (createComponent(vnode)) return (vnode.el = vnode.componentInstance.$el)
+    if (createComponent(vnode, insertedVnodeQueue)) return (vnode.el = vnode.componentInstance.$el)
     vnode.el = document.createElement(tag) // 放在 vnode 上为后续 diff 算法做对比使用
     patchProps(vnode.el, {}, data.attrs)
     children.forEach(child => {
-      const element = createElm(child)
+      const element = createElm(child, insertedVnodeQueue)
       vnode.el.appendChild(element)
     })
     if (data) {

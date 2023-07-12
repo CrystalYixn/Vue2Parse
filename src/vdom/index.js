@@ -1,3 +1,5 @@
+import { callHook } from "../lifecycle"
+
 const isReservedTag = (tag) => {
   return ['a', 'div', 'p', 'button', 'ul', 'li', 'span'].includes(tag)
 }
@@ -45,6 +47,13 @@ function createComponentVnode(vm, tag, key, data, children, Ctor) {
       const vm = vnode.componentInstance = oldVnode.componentInstance
       for (const key in propsData) {
         vm._props[key] = propsData[key]
+      }
+    },
+    insert(vnode) {
+      const { componentInstance } = vnode
+      if (!componentInstance._isMounted) {
+        componentInstance._isMounted = true
+        callHook(componentInstance, 'mounted')
       }
     }
   }

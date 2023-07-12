@@ -1,7 +1,8 @@
 const strats = {}
 const LIFECYCLE = [
   'beforeCreate',
-  'created'
+  'created',
+  'mounted',
 ]
 LIFECYCLE.forEach(hook => strats[hook] = function(p, c) {
   if (c) {
