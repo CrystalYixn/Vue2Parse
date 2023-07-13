@@ -7,26 +7,17 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="app"><my @event="eventHandler"></my></div>
+  <div id="app"><my ref="myRef"></my><span ref="spanRef">11</span></div>
   <script src="./dist/vue.js"></script>
   <script>
     const app = new Vue({
       el: '#app',
-      methods: {
-        eventHandler() {
-          console.log('我被触发了')
-        }
-      },
       mounted() {
-        console.log('根组件mounted')
+        console.log(this.$refs)
       },
       components: {
         my: {
           template: '<button>点我啊</button>',
-          mounted() {
-            console.log('子组件mounted')
-            this.$emit('event')
-          },
         }
       }
     })

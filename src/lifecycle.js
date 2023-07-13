@@ -18,7 +18,11 @@ export function mountComponent(vm, el) {
   }
 }
 
-export function initLifecycle(Vue) {
+export function initLifecycle(vm) {
+  vm.$refs = {}
+}
+
+export function lifecycleMixin(Vue) {
   Vue.prototype._update = function(vnode) {
     const prevVnode = this._vnode
     // 将组件产生的虚拟节点保存

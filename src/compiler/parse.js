@@ -93,8 +93,16 @@ export function parseHTML(html) {
   /*  */
   function end() {
     const node = stack[stack.length - 1]
+    processRef(node)
     processAttrs(node)
     stackPop()
+  }
+
+  function processRef(el) {
+    const ref = JSON.stringify(getAndRemoveAttr(el, 'ref', true))
+    if (ref) {
+      el.ref = ref
+    }
   }
 
   function processAttrs(node) {

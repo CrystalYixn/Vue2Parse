@@ -1,7 +1,8 @@
 import { isSameVnode } from "./index"
 
+// 用户的dom操作与属性操作, 分为内核中定义的逻辑与针对平台(浏览器)的逻辑
 let cbs = {
-  create: [updateDOMListeners]
+  create: [updateDOMListeners, registerRef]
 }
 
 /* 初始化与更新, 只有真实tag会进入patch */
@@ -55,6 +56,7 @@ function createComponent(vnode, insertedVnodeQueue) {
     //   insertedVnodeQueue.push(...vnode.data.pendingInsert)
     //   vnode.data.pendingInsert = null
     // }
+    invokeCreateHooks(vnode)
     insertedVnodeQueue.push(vnode)
     return true
   }
@@ -79,19 +81,27 @@ export function createElm(vnode, insertedVnodeQueue) {
     vnode.el = document.createTextNode(text)
   }
   return vnode.el
-
-  function invokeCreateHooks(vnode) {
-    for (let i = 0;i < cbs.create.length; i++) {
-      cbs.create[i](vnode)
-    }
-  }
 }
 
+function invokeCreateHooks(vnode) {
+  for (let i = 0;i < cbs.create.length; i++) {
+    cbs.create[i](vnode)
+  }
+}
 function updateDOMListeners(vnode) {
   const { on } = vnode.data
   for (const name in on) {
     vnode.el.addEventListener(name, on[name])
   }
+}
+
+function registerRef(vnode) {
+  const { ref: key } = vnode.data
+  if (!key) return
+  const vm = vnode.context
+  const ref = vnode.componentInstance || vnode.el
+  const refs = vm.$refs
+  refs[key] = ref
 }
 
 /* 将所有属性设置到DOM元素上 */

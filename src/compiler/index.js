@@ -50,13 +50,16 @@ function genIf(ast) {
   }
 }
 
-function genData(ast) {
+function genData(el) {
   let data = '{'
-  if (ast.attrs.length) {
-    data += `attrs:${genProps(ast.attrs)},`
+  if (el.ref) {
+    data += `ref:${el.ref},`
   }
-  if (ast.events) {
-    data += `${genHandlers(ast.events)},`
+  if (el.attrs.length) {
+    data += `attrs:${genProps(el.attrs)},`
+  }
+  if (el.events) {
+    data += `${genHandlers(el.events)},`
   }
   data += '}'
   return data

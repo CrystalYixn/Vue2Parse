@@ -1,7 +1,7 @@
 import { initState } from "./state"
 import { initEvents } from "./events"
 import { compileToFunction } from "./compiler/index"
-import { callHook, mountComponent } from "./lifecycle"
+import { callHook, initLifecycle, mountComponent } from "./lifecycle"
 import { mergeOptions } from "./utils"
 import { defineReactive } from "./observe/index"
 
@@ -14,6 +14,7 @@ export function initMixin(Vue) {
     } else {
       vm.$options = mergeOptions(this.constructor.options, options)
     }
+    initLifecycle(vm)
     initEvents(vm)
     callHook(vm, 'beforeCreate')
     initState(vm)
