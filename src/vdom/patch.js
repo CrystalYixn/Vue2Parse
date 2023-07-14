@@ -1,3 +1,4 @@
+import { activeInstance } from "../lifecycle"
 import { isSameVnode } from "./index"
 
 // 用户的dom操作与属性操作, 分为内核中定义的逻辑与针对平台(浏览器)的逻辑
@@ -48,7 +49,7 @@ function invokeInsertHook(vnode, queue, isInit) {
 function createComponent(vnode, insertedVnodeQueue) {
   let i = vnode.data
   if ((i = i.hook) && (i = i.init)) {
-    i(vnode)
+    i(vnode, activeInstance)
   }
   // 回调函数执行成功后会挂载属性
   if (vnode.componentInstance) {

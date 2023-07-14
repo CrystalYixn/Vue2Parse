@@ -7,17 +7,18 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="app"><my ref="myRef"></my><span ref="spanRef">11</span></div>
+  <div id="app"><my /></div>
   <script src="./dist/vue.js"></script>
   <script>
     const app = new Vue({
       el: '#app',
-      mounted() {
-        console.log(this.$refs)
+      provide: {
+        age: 18
       },
       components: {
         my: {
-          template: '<button>点我啊</button>',
+          template: '<button>{{age}}</button>',
+          inject: ['age']
         }
       }
     })

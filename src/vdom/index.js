@@ -34,11 +34,12 @@ function createComponentVnode(vm, tag, key, data, children, Ctor) {
   data.on = data.nativeOn
   // 手动增加一个attribute, 方便在patch时回调
   data.hook = {
-    init(vnode) {
+    init(vnode, parent) {
       // 在vnode上增加一个属性保存组件实例
       let instance = vnode.componentInstance = new vnode.componentOptions.Ctor({
         _isComponent: true,
         _parentVnode: vnode,
+        parent,
       })
       // 在实例的$el上保存组件对应的真实dom
       instance.$mount()

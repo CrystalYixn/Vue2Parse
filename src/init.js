@@ -2,6 +2,7 @@ import { initState } from "./state"
 import { initEvents } from "./events"
 import { compileToFunction } from "./compiler/index"
 import { callHook, initLifecycle, mountComponent } from "./lifecycle"
+import { initInjections, initProvide } from "./inject"
 import { mergeOptions } from "./utils"
 import { defineReactive } from "./observe/index"
 
@@ -17,7 +18,9 @@ export function initMixin(Vue) {
     initLifecycle(vm)
     initEvents(vm)
     callHook(vm, 'beforeCreate')
+    initInjections(vm)
     initState(vm)
+    initProvide(vm)
     callHook(vm, 'created')
     if (options.el) {
       vm.$mount(options.el)
@@ -28,6 +31,7 @@ export function initMixin(Vue) {
       // _parentVnode指向的是自定义标签的vnode, 而当前vnode则是实际的标签vnode, 所以需要从父vnode上获取props等信息
       const vnodeComponentOptions = options._parentVnode.componentOptions
       const opts = vm.$options = vm.constructor.options
+      opts.parent = options.parent
       opts.propsData = vnodeComponentOptions.propsData
       opts._parentListeners = vnodeComponentOptions.listeners
     }

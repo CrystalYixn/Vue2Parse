@@ -2,6 +2,17 @@ import Watcher from "./observe/watcher"
 import { createElementVNode, createTextVNode } from "./vdom/index"
 import { patch } from "./vdom/patch"
 
+/** 方便一部分方法获取实例, 而不需要传入参数 */
+export let activeInstance = null
+
+export function setActiveInstance(vm) {
+  const prevActiveInstance = activeInstance
+  activeInstance = vm
+  return () => {
+    activeInstance = prevActiveInstance
+  }
+}
+
 export function mountComponent(vm, el) {
   // 1. 调用 render 方法产生虚拟 DOM
   vm.$el = el
@@ -19,11 +30,14 @@ export function mountComponent(vm, el) {
 }
 
 export function initLifecycle(vm) {
+  let parent = vm.$options.parent
   vm.$refs = {}
+  vm.$parent = parent
 }
 
 export function lifecycleMixin(Vue) {
   Vue.prototype._update = function(vnode) {
+    const restoreActiveInstance = setActiveInstance(this)
     const prevVnode = this._vnode
     // 将组件产生的虚拟节点保存
     this._vnode = vnode
@@ -34,6 +48,7 @@ export function lifecycleMixin(Vue) {
       // 视为初始化，直接替换$el的内容
       this.$el = patch(this.$el, vnode)
     }
+    restoreActiveInstance()
   }
   Vue.prototype._render = function() {
     this.$vnode = this.$options._parentVnode
