@@ -71,7 +71,7 @@ export function createElm(vnode, insertedVnodeQueue) {
     if (createComponent(vnode, insertedVnodeQueue)) return (vnode.el = vnode.componentInstance.$el)
     vnode.el = document.createElement(tag) // 放在 vnode 上为后续 diff 算法做对比使用
     patchProps(vnode.el, {}, data.attrs)
-    children.forEach(child => {
+    children?.forEach(child => {
       const element = createElm(child, insertedVnodeQueue)
       vnode.el.appendChild(element)
     })

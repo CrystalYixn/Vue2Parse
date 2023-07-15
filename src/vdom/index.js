@@ -4,21 +4,18 @@ const isReservedTag = (tag) => {
   return ['a', 'div', 'p', 'button', 'ul', 'li', 'span'].includes(tag)
 }
 /** 创建虚拟元素节点 */
-export function createElementVNode(context, tag, data, ...children) {
-  const { attr: attrs = {} } = data
-  const { key } = attrs
-  key && delete attrs.key
+export function createElementVNode(context, tag, data, children) {
   if (isReservedTag(tag)) {
-    return VNode(tag, data, children, undefined, context, key)
+    return VNode(tag, data, children, undefined, undefined, context)
   } else {
     const Ctor = context.$options.components[tag]
-    return createComponentVnode(context, tag, key, data, children, Ctor)
+    return createComponentVnode(Ctor, data, context, children, tag)
   }
 }
 
-function createComponentVnode(vm, tag, key, data, children, Ctor) {
+function createComponentVnode(Ctor, data, context, children, tag) {
   if (typeof Ctor === 'object') {
-    Ctor = vm.$options._base.extend(Ctor)
+    Ctor = context.$options._base.extend(Ctor)
   }
 
   let asyncFactory
@@ -27,7 +24,7 @@ function createComponentVnode(vm, tag, key, data, children, Ctor) {
     asyncFactory = Ctor
     Ctor = resolveAsyncComponent(asyncFactory)
     if (typeof Ctor === 'undefined') {
-      return createTextVNode(vm, '')
+      return createTextVNode(context, '')
     }
   }
   const listeners = data.on
@@ -64,7 +61,7 @@ function createComponentVnode(vm, tag, key, data, children, Ctor) {
       return factory.resolved
     }
 
-    const contexts = factory.contexts = [vm]
+    const contexts = factory.contexts = [context]
     const res = factory()
     // promise
     if (typeof res.then) {
@@ -74,7 +71,7 @@ function createComponentVnode(vm, tag, key, data, children, Ctor) {
     }
 
     function resolve(res) {
-      factory.resolved = vm.$options._base.extend(res)
+      factory.resolved = context.$options._base.extend(res)
       forceRender()
     }
 
@@ -88,7 +85,7 @@ function createComponentVnode(vm, tag, key, data, children, Ctor) {
   }
   
   const propsData = extractPropsFromVnodeData(data, Ctor)
-  return VNode(tag, data, children, null, vm, key , { Ctor, propsData, listeners })
+  return VNode(tag, data, children, null, undefined, context, { Ctor, propsData, listeners })
 }
 
 /** 分离props和attrs */
@@ -107,10 +104,11 @@ function extractPropsFromVnodeData(data, Ctor) {
 
 /** 创建虚拟文本节点 */
 export function createTextVNode(vm, text) {
-  return VNode(undefined, undefined, undefined, text, vm, undefined, undefined)
+  return VNode(undefined, undefined, undefined, text, undefined, vm, undefined)
 }
 
-function VNode(tag, data, children, text, context, key, componentOptions) {
+function VNode(tag, data, children, text, elm, context, componentOptions) {
+  const key = data?.key
   return {
     tag,
     data,

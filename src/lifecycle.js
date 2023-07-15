@@ -31,8 +31,12 @@ export function mountComponent(vm, el) {
 
 export function initLifecycle(vm) {
   let parent = vm.$options.parent
+  if (parent) {
+    parent.$children.push(vm)
+  }
   vm.$refs = {}
   vm.$parent = parent
+  vm.$children = []
 }
 
 export function lifecycleMixin(Vue) {

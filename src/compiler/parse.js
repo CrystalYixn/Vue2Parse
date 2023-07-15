@@ -92,10 +92,18 @@ export function parseHTML(html) {
 
   /*  */
   function end() {
-    const node = stack[stack.length - 1]
-    processRef(node)
-    processAttrs(node)
+    const element = stack[stack.length - 1]
+    processKey(element)
+    processRef(element)
+    processAttrs(element)
     stackPop()
+  }
+
+  function processKey(el) {
+    const exp = JSON.stringify(getAndRemoveAttr(el, 'key', true))
+    if (exp) {
+      el.key = exp
+    }
   }
 
   function processRef(el) {

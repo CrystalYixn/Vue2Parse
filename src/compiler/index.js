@@ -98,7 +98,7 @@ function genProps(attrs) {
 /** 返回形如"_v("年龄" + _s(age)), _c("div", null)" 的字符串 */
 function genChildren(children) {
   if (children) {
-    return children.map(child => gen(child)).join(',')
+    return `[${children.map(child => gen(child)).join(', ')}]`
   }
 }
 
