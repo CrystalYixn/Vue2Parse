@@ -10,6 +10,8 @@ const endTag = new RegExp(`^<\\/${qnameCapture}[^>]*>`)
 const dirRE = /^v-|^@|^:|^\./
 /** 匹配绑定事件 */
 const onRE = /^@|^v-on:/
+/** 匹配 v-slot: 或 v-slot$ 或 # 开头 */
+const slotRE = /^v-slot(:|$)|^#/
 /** 匹配for表达式 */
 const forAliasRE = /([\s\S]*?)\s+(?:in|of)\s+([\s\S]*)/
 // 匹配属性，支持不带值或者单引号或者不带引号外的内容
@@ -55,7 +57,6 @@ export function parseHTML(html) {
 
   function stackPush(node) {
     stack.push(node)
-    currentParent && currentParent.children.push(node)
     currentParent = node
   }
 
@@ -63,7 +64,8 @@ export function parseHTML(html) {
     return {
       tag,
       type: text ? TEXT_TYPE : ELEMENT_TYPE,
-      attrs,
+      attrsList: attrs, // 仅在parse阶段使用, generator阶段使用attrs
+      attrsMap: makeAttrsMap(attrs), // 避免遍历查找
       children: [],
       text,
       parent: currentParent || null,
@@ -93,34 +95,69 @@ export function parseHTML(html) {
   /*  */
   function end() {
     const element = stack[stack.length - 1]
+    stackPop()
     processKey(element)
     processRef(element)
+    processSlotContent(element)
+    processSlotOutlet(element)
     processAttrs(element)
-    stackPop()
+    if (currentParent) {
+      if (element.slotScope) {
+        const name = element.slotTarget || '"default"'
+        // 设置父元素, 拥有的所有插槽
+        ;(currentParent.scopedSlots || (currentParent.scopedSlots = {}))[name] = element
+      }
+      currentParent.children.push(element)
+      element.parent = currentParent
+    }
+    // 过滤 template
+    element.children = element.children.filter(c => !c.slotScope)
   }
 
   function processKey(el) {
-    const exp = JSON.stringify(getAndRemoveAttr(el, 'key', true))
+    const exp = getBindingAttr(el, 'key')
     if (exp) {
       el.key = exp
     }
   }
 
   function processRef(el) {
-    const ref = JSON.stringify(getAndRemoveAttr(el, 'ref', true))
+    const ref = getBindingAttr(el, 'ref')
     if (ref) {
       el.ref = ref
     }
   }
 
-  function processAttrs(node) {
-    const { attrs = [] } = node
-    attrs.forEach(i => {
+  /** 处理template插槽子元素, 赋值槽名称, 作用域变量 */
+  function processSlotContent(el) {
+    if (el.tag === 'template') {
+      const slotBinding = getAndRemoveAttrByRegex(el, slotRE)
+      if (slotBinding) {
+        // 插入的槽对象名称
+        el.slotTarget = `"${slotBinding.name.replace(slotRE, '')}"`
+        // 作用域变量
+        el.slotScope = slotBinding.value || '_'
+      }
+    }
+  }
+
+  function processSlotOutlet(el) {
+    if (el.tag === 'slot') {
+      // slot插槽的名称
+      el.slotName = getBindingAttr(el, 'name')
+    }
+  }
+
+  /**  */
+  function processAttrs(el) {
+    const { attrsList = [] } = el
+    attrsList.forEach(i => {
       const { name, value } = i
+      // 是否为事件或指令
       if (dirRE.test(name)) {
         if (onRE.test(name)) {
           i.name = name.replace(onRE, '')
-          let events = node.events || (node.events = {})
+          let events = el.events || (el.events = {})
           events[i.name] = {
             value: i.value
           }
@@ -128,7 +165,9 @@ export function parseHTML(html) {
           i.name = name.replace(dirRE, '')
         }
       } else {
-        i.value = JSON.stringify(value)
+        // 保存 genCode 阶段使用的属性
+        const attrs = (el.attrs || (el.attrs = []))
+        attrs.push({ name, value: JSON.stringify(value) })
       }
     })
   }
@@ -158,14 +197,43 @@ export function parseHTML(html) {
     }
   }
 
-  function getAndRemoveAttr(node, name, removeFromMap) {
-    let nameIndex = node.attrs?.findIndex(i => i.name === name)
-    let val
-    if (nameIndex > -1) {
-      val = node.attrs[nameIndex].value
-      if (removeFromMap) {
-        node.attrs.splice(nameIndex, 1)
+  /** 通过正则获取并在原对象中移除对应名称属性, 返回{name:xx,value:xx} */
+  function getAndRemoveAttrByRegex(el, name) {
+    const list = el.attrsList
+    for (const i in list) {
+      const attr = list[i]
+      if (name.test(attr.name)) {
+        list.splice(i, 1)
+        return attr
       }
+    }
+  }
+
+  function makeAttrsMap(attrs) {
+    const map = {}
+    attrs?.forEach(i => {
+      map[i.name] = i.value
+    })
+    return map
+  }
+
+  function getBindingAttr(el, name) {
+    return JSON.stringify(getAndRemoveAttr(el, name, true))
+  }
+
+  function getAndRemoveAttr(el, name, removeFromMap) {
+    let val
+    if ((val = el.attrsMap[name]) != null) {
+      const list = el.attrsList
+      for (let i = 0; i < list.length; i++) {
+        if (list[i].name === name) {
+          list.splice(i, 1)
+          break
+        }
+      }
+    }
+    if (removeFromMap) {
+      delete el.attrsMap[name]
     }
     return val
   }

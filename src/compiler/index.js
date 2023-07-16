@@ -18,6 +18,8 @@ function genElement(el) {
     return genFor(el)
   } else if (el.if && !el.ifProcessed) {
     return genIf(el)
+  } else if (el.tag === 'template' && !el.slotTarget) {
+    return genChildren(el) || 'void 0'
   } else if (el.tag === 'slot') {
     return genSlot(el)
   }
@@ -64,14 +66,47 @@ function genData(el) {
   if (el.ref) {
     data += `ref:${el.ref},`
   }
-  if (el.attrs.length) {
+  if (el.attrs) {
     data += `attrs:${genProps(el.attrs)},`
   }
   if (el.events) {
     data += `${genHandlers(el.events)},`
   }
+  if (el.scopedSlots) {
+    data += `${genScopedSlots(el.scopedSlots)},`
+  }
   data += '}'
   return data
+}
+
+/** 返回形如  的字符串 */
+function genScopedSlots(slots) {
+  return `scopedSlots:_u([
+    ${Object.keys(slots).map(key => {
+      const el = slots[key]
+      const fn = `function(${el.slotScope}){
+        return ${el.tag === 'template'
+          ? genChildren(el)
+          : genElement(el)
+        }
+      }`
+      return `{key:${el.slotTarget || '"default"'}, fn:${fn}}`
+      // return 
+    }).join(',')}
+  ])`
+  // 采用此方案则不再需要vm._u, 唯一不同在于没有对slot进行递归处理
+  // return `scopedSlots: {
+  //   ${Object.keys(slots).map(key => {
+  //     const el = slots[key]
+  //     const fn = `function(${el.slotScope}){
+  //       return ${el.tag === 'template'
+  //         ? genChildren(el)
+  //         : genElement(el)
+  //       }
+  //     }`
+  //     return `${el.slotTarget || '"default"'}:${fn}`
+  //   }).join(',')}
+  // }`
 }
 
 /** 返回形如 on:{"click":myMethod} 的字符串 */

@@ -42,8 +42,11 @@ export function initLifecycle(vm) {
 export function initRender(vm) {
   const opts = vm.$options
   vm.$slots = resolveSlots(opts._renderChildren)
+  vm.$scopedSlots = {}
 
+  /** 解析默认插槽 */
   function resolveSlots(children) {
+    // 具名插槽与作用域插槽没有孩子
     if (!children?.length) return {}
     const slots = {}
     children.forEach(child => {
@@ -69,7 +72,13 @@ export function lifecycleMixin(Vue) {
     restoreActiveInstance()
   }
   Vue.prototype._render = function() {
-    this.$vnode = this.$options._parentVnode
+    const { _parentVnode } = this.$options
+    if (_parentVnode) {
+      // 两者基本等价
+      // this.$scopedSlots = _parentVnode.data.scopedSlots
+      this.$scopedSlots = normalizeScopedSlots(_parentVnode.data.scopedSlots, this.$slots)
+    }
+    this.$vnode = _parentVnode
     const vnode = this.$options.render.call(this)
     vnode.parent = this.$vnode
     return vnode 
@@ -109,11 +118,62 @@ export function lifecycleMixin(Vue) {
   /** 创建插槽内容 */
   Vue.prototype._t = renderSlot
   function renderSlot(name) {
+    const scopedSlotFn = this.$scopedSlots[name]
     let nodes
-    nodes = this.$slots[name]
+    if (scopedSlotFn) {
+      const props = {}
+      nodes = scopedSlotFn(props)
+    } else {
+      nodes = this.$slots[name]
+    }
     return nodes
   }
+  /** 解析作用域插槽为一个对象, 保存在 vnode.data.scopedSlots 中 */
+  Vue.prototype._u = resolveScopedSlots
+  function resolveScopedSlots(fns, res = {}) {
+    for (let i = 0; i < fns.length; i++) {
+      const slot = fns[i]
+      // 如果此处不需要递归则可以直接在 generate 阶段生成对象, 不再需要vm._c
+      if (Array.isArray(slot)) {
+        resolveScopedSlots(slot, res)
+      } else if (slot) {
+        res[slot.key] = slot.fn
+      }
+    }
+    return res
+  }
 }
+
+/** 获取具名插槽并包装函数作用域 */
+export function normalizeScopedSlots(slots, normalSlots) {
+  let res = {}
+  if (!slots) return res
+  for (const key in slots) {
+    // 原方案
+    // res[key] = normalizeScopedSlot(normalSlots, key, slots[key])
+    res[key] = slots[key]
+  }
+  // for (const key in normalSlots) {
+  //   if (!(key in res)) {
+  //     res[key] = () => normalSlots[key]
+  //   }
+  // }
+  return res
+}
+
+// /** 包装函数作用域, 进行插槽代理 */
+// function normalizeScopedSlot(normalSlots, key, fn) {
+//   const normalized = (scope = {}) => {
+//     const res = fn(scope)
+//     return [res]
+//   }
+//   if (!(key in normalSlots)) {
+//     Object.defineProperty(normalSlots, key, {
+//       get: normalized
+//     })
+//   }
+//   return normalized
+// }
 
 export function callHook(vm, hook) {
   const handlers = vm.$options[hook]

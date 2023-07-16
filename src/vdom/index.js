@@ -90,12 +90,12 @@ function createComponentVnode(Ctor, data, context, children, tag) {
 }
 
 function simpleNormalizeChildren(children) {
-  for (let i = 0; i < children.length; i++) {
-    if (Array.isArray(children[i])) {
-      return Array.prototype.concat.apply([], children)
-    }
+  if (Array.isArray(children?.[0])) {
+    children = Array.prototype.concat.apply([], children)
+    return simpleNormalizeChildren(children)
+  } else {
+    return children
   }
-  return children
 }
 
 /** 分离props和attrs */

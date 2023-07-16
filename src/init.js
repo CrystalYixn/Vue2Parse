@@ -30,11 +30,13 @@ export function initMixin(Vue) {
     function initInternalComponent(vm, options) {
       // 定义propsData存储解析的数据, props则用于记录用户的传入选项
       // _parentVnode指向的是自定义标签的vnode, 而当前vnode则是实际的标签vnode, 所以需要从父vnode上获取props等信息
-      const vnodeComponentOptions = options._parentVnode.componentOptions
+      const parentVnode = options._parentVnode
+      const vnodeComponentOptions = parentVnode.componentOptions
       const opts = vm.$options = vm.constructor.options
       opts.parent = options.parent
       opts.propsData = vnodeComponentOptions.propsData
       opts._parentListeners = vnodeComponentOptions.listeners
+      opts._parentVnode = parentVnode
       opts._renderChildren = vnodeComponentOptions.children
     }
   }
