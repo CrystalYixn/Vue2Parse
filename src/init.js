@@ -1,7 +1,7 @@
 import { initState } from "./state"
 import { initEvents } from "./events"
 import { compileToFunction } from "./compiler/index"
-import { callHook, initLifecycle, mountComponent } from "./lifecycle"
+import { callHook, initLifecycle, mountComponent, initRender } from "./lifecycle"
 import { initInjections, initProvide } from "./inject"
 import { mergeOptions } from "./utils"
 import { defineReactive } from "./observe/index"
@@ -17,6 +17,7 @@ export function initMixin(Vue) {
     }
     initLifecycle(vm)
     initEvents(vm)
+    initRender(vm)
     callHook(vm, 'beforeCreate')
     initInjections(vm)
     initState(vm)
@@ -34,6 +35,7 @@ export function initMixin(Vue) {
       opts.parent = options.parent
       opts.propsData = vnodeComponentOptions.propsData
       opts._parentListeners = vnodeComponentOptions.listeners
+      opts._renderChildren = vnodeComponentOptions.children
     }
   }
 

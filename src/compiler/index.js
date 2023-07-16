@@ -13,14 +13,16 @@ export function compileToFunction(template) {
 }
 
 /** ast转为字符串 */
-function genElement(ast) {
-  if (ast.for && !ast.forProcessed) {
-    return genFor(ast)
-  } else if (ast.if && !ast.ifProcessed) {
-    return genIf(ast)
+function genElement(el) {
+  if (el.for && !el.forProcessed) {
+    return genFor(el)
+  } else if (el.if && !el.ifProcessed) {
+    return genIf(el)
+  } else if (el.tag === 'slot') {
+    return genSlot(el)
   }
-  let children = genChildren(ast.children)
-  let code = `_c('${ast.tag}', ${genData(ast)}${ ast.children.length ? `, ${children}` : '' })`
+  let children = genChildren(el)
+  let code = `_c('${el.tag}', ${genData(el)}${ el.children.length ? `, ${children}` : '' })`
   return code
 }
 
@@ -48,6 +50,13 @@ function genIf(ast) {
   } else {
     return `${genElement(condition.block)}`
   }
+}
+
+function genSlot(el) {
+  const slotName = el.slotName || '"default"'
+  const children = genChildren(el)
+  let res = `_t(${slotName}${children ? `, ${children}` : ''}`
+  return res + ')'
 }
 
 function genData(el) {
@@ -95,9 +104,10 @@ function genProps(attrs) {
   return `{${str.slice(0, -1)}}`
 }
 
-/** 返回形如"_v("年龄" + _s(age)), _c("div", null)" 的字符串 */
-function genChildren(children) {
-  if (children) {
+/** 返回形如"[_v("年龄" + _s(age)), _c("div", null)]" 的字符串 */
+function genChildren(el) {
+  const { children } = el
+  if (children?.length) {
     return `[${children.map(child => gen(child)).join(', ')}]`
   }
 }

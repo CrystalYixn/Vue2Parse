@@ -7,18 +7,22 @@
   <title>Document</title>
 </head>
 <body>
-  <div id="app"><my /></div>
+  <div id="app"><my><button>{{ msg }}</button></my></div>
   <script src="./dist/vue.js"></script>
   <script>
     const app = new Vue({
       el: '#app',
-      provide: {
-        age: 18
+      data: {
+        msg: 'outer'
       },
       components: {
         my: {
-          template: '<button>{{age}}</button>',
-          inject: ['age']
+          template: '<span><slot></slot></span>',
+          data() {
+            return {
+              msg: 'inner'
+            }
+          }
         }
       }
     })

@@ -39,6 +39,20 @@ export function initLifecycle(vm) {
   vm.$children = []
 }
 
+export function initRender(vm) {
+  const opts = vm.$options
+  vm.$slots = resolveSlots(opts._renderChildren)
+
+  function resolveSlots(children) {
+    if (!children?.length) return {}
+    const slots = {}
+    children.forEach(child => {
+      (slots.default || (slots.default = [])).push(child)
+    })
+    return slots
+  }
+}
+
 export function lifecycleMixin(Vue) {
   Vue.prototype._update = function(vnode) {
     const restoreActiveInstance = setActiveInstance(this)
@@ -80,7 +94,7 @@ export function lifecycleMixin(Vue) {
       return value
     }
   }
-  /** 创建 mustache 内容 */
+  /** 创建重复循环内容 */
   Vue.prototype._l = renderList
   function renderList(val, render) {
     let ret = []
@@ -91,6 +105,13 @@ export function lifecycleMixin(Vue) {
       }
     }
     return ret
+  }
+  /** 创建插槽内容 */
+  Vue.prototype._t = renderSlot
+  function renderSlot(name) {
+    let nodes
+    nodes = this.$slots[name]
+    return nodes
   }
 }
 

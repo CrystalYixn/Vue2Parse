@@ -5,6 +5,7 @@ const isReservedTag = (tag) => {
 }
 /** 创建虚拟元素节点 */
 export function createElementVNode(context, tag, data, children) {
+  children = simpleNormalizeChildren(children)
   if (isReservedTag(tag)) {
     return VNode(tag, data, children, undefined, undefined, context)
   } else {
@@ -85,7 +86,16 @@ function createComponentVnode(Ctor, data, context, children, tag) {
   }
   
   const propsData = extractPropsFromVnodeData(data, Ctor)
-  return VNode(tag, data, children, null, undefined, context, { Ctor, propsData, listeners })
+  return VNode(tag, data, undefined, null, undefined, context, { Ctor, propsData, listeners, tag, children })
+}
+
+function simpleNormalizeChildren(children) {
+  for (let i = 0; i < children.length; i++) {
+    if (Array.isArray(children[i])) {
+      return Array.prototype.concat.apply([], children)
+    }
+  }
+  return children
 }
 
 /** 分离props和attrs */
