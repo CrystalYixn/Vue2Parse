@@ -8,6 +8,8 @@ const startTagOpen = new RegExp(`^<${qnameCapture}`)
 const endTag = new RegExp(`^<\\/${qnameCapture}[^>]*>`)
 /** 匹配绑定属性或事件或修饰符 */
 const dirRE = /^v-|^@|^:|^\./
+/** 匹配绑定属性 */
+const bindRE = /^:|^\.|^v-bind:/
 /** 匹配绑定事件 */
 const onRE = /^@|^v-on:/
 /** 匹配 v-slot: 或 v-slot$ 或 # 开头 */
@@ -151,11 +153,14 @@ export function parseHTML(html) {
   /**  */
   function processAttrs(el) {
     const { attrsList = [] } = el
+    const attrs = (el.attrs || (el.attrs = []))
     attrsList.forEach(i => {
       const { name, value } = i
       // 是否为事件或指令
       if (dirRE.test(name)) {
-        if (onRE.test(name)) {
+        if (bindRE.test(name)) {
+          attrs.push({ name: name.replace(bindRE, ''), value })
+        } else if (onRE.test(name)) {
           i.name = name.replace(onRE, '')
           let events = el.events || (el.events = {})
           events[i.name] = {
@@ -166,7 +171,6 @@ export function parseHTML(html) {
         }
       } else {
         // 保存 genCode 阶段使用的属性
-        const attrs = (el.attrs || (el.attrs = []))
         attrs.push({ name, value: JSON.stringify(value) })
       }
     })

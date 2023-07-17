@@ -58,6 +58,10 @@ function genSlot(el) {
   const slotName = el.slotName || '"default"'
   const children = genChildren(el)
   let res = `_t(${slotName}${children ? `, ${children}` : ''}`
+  const attrs = el.attrs && `{${el.attrs.map(i => `"${i.name}":${i.value}`).join(',')}}`
+  if (attrs) {
+    res += `,${attrs}`
+  }
   return res + ')'
 }
 

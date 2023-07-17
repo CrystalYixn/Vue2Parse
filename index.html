@@ -8,7 +8,7 @@
 </head>
 <body>
   <script src="./dist/vue.js"></script>
-  <div id="app"><my><template #header><button>{{ msg }}</button></template></my></div>
+  <div id="app"><my><template #header="{msg}"><button>{{ msg }}</button></template></my></div>
   <script>
     const app = new Vue({
       el: '#app',
@@ -17,7 +17,7 @@
       },
       components: {
         my: {
-          template: '<span><slot name="header"></slot></span>',
+          template: '<span><slot name="header" :msg="msg"></slot></span>',
           data() {
             return {
               msg: 'inner'

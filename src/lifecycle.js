@@ -117,11 +117,10 @@ export function lifecycleMixin(Vue) {
   }
   /** 创建插槽内容 */
   Vue.prototype._t = renderSlot
-  function renderSlot(name) {
+  function renderSlot(name, props) {
     const scopedSlotFn = this.$scopedSlots[name]
     let nodes
     if (scopedSlotFn) {
-      const props = {}
       nodes = scopedSlotFn(props)
     } else {
       nodes = this.$slots[name]
