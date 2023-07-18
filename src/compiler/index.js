@@ -23,8 +23,13 @@ function genElement(el) {
   } else if (el.tag === 'slot') {
     return genSlot(el)
   }
-  let children = genChildren(el)
-  let code = `_c('${el.tag}', ${genData(el)}${ el.children.length ? `, ${children}` : '' })`
+  let code
+  if (el.component) {
+    code = genComponent(el.component, el)
+  } else {
+    let children = genChildren(el)
+    code = `_c('${el.tag}', ${genData(el)}${ el.children.length ? `, ${children}` : '' })`
+  }
   return code
 }
 
@@ -63,6 +68,11 @@ function genSlot(el) {
     res += `,${attrs}`
   }
   return res + ')'
+}
+
+function genComponent(componentName, el) {
+  const children = genChildren(el)
+  return `_c(${componentName}, ${genData(el)}${children ? `,${children}` : ''})`
 }
 
 function genData(el) {

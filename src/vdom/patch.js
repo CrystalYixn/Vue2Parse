@@ -25,7 +25,7 @@ export function patch(oldVNode, vnode) {
       parentElm.insertBefore(newElm, elm.nextSibling)
       parentElm.removeChild(elm)
     } else {
-      patchVnode(oldVNode, vnode)
+      patchVnode(oldVNode, vnode, insertedVnodeQueue)
     }
   }
   invokeInsertHook(vnode, insertedVnodeQueue, isInitialPatch)
@@ -134,10 +134,10 @@ export function patchProps(el, oldProps = {}, props = {}) {
 }
 
 /* 更新DOM渲染 */
-function patchVnode(oldVNode, vnode) {
+function patchVnode(oldVNode, vnode, insertedVnodeQueue) {
   // 两个节点的tag与key相同则视为同一个节点
   if (!isSameVnode(oldVNode, vnode)) {
-    return oldVNode.el.parentNode.replaceChild(createElm(vnode), oldVNode.el)
+    return oldVNode.el.parentNode.replaceChild(createElm(vnode, insertedVnodeQueue), oldVNode.el)
   }
   const el = vnode.el = oldVNode.el
   // 文本节点
@@ -152,7 +152,7 @@ function patchVnode(oldVNode, vnode) {
   const newChildren = vnode.children || []
   // 需要完整的diff算法
   if (oldChildren.length && newChildren.length) {
-    updateChildren(el, oldChildren, newChildren)
+    updateChildren(el, oldChildren, newChildren, insertedVnodeQueue)
   } else if (oldChildren.length) {
     el.innerHTML = ''
   } else if (newChildren.length) {
@@ -167,7 +167,7 @@ function mountChildren(el, newChildren) {
   newChildren.forEach(child => el.appendChild(createElm(child)))
 }
 
-function updateChildren(el, oldChildren, newChildren) {
+function updateChildren(el, oldChildren, newChildren, insertedVnodeQueue) {
   // 双指针方式
   let oldStartIndex = 0
   let newStartIndex = 0
@@ -189,24 +189,24 @@ function updateChildren(el, oldChildren, newChildren) {
       oldEndVnode = oldChildren[--oldEndIndex]
     } else if (isSameVnode(oldStartVnode, newStartVnode)) {
       // 头指针步进，处理push
-      patchVnode(oldStartVnode, newStartVnode)
+      patchVnode(oldStartVnode, newStartVnode, insertedVnodeQueue)
       oldStartVnode = oldChildren[++oldStartIndex]
       newStartVnode = newChildren[++newStartIndex]
     } else if (isSameVnode(oldEndVnode, newEndVnode)) {
       // 尾指针步进，处理unshift
-      patchVnode(oldEndVnode, newEndVnode)
+      patchVnode(oldEndVnode, newEndVnode, insertedVnodeQueue)
       oldEndVnode = oldChildren[--oldEndIndex]
       newEndVnode = newChildren[--newEndIndex]
     } else if (isSameVnode(oldEndVnode, newStartVnode)) {
       // 交叉对比，处理reverse或sort情况
-      patchVnode(oldEndVnode, newStartVnode)
+      patchVnode(oldEndVnode, newStartVnode, insertedVnodeQueue)
       // 将旧的尾巴移动到旧的前面
       el.insertBefore(oldEndVnode.el, oldStartVnode.el)
       oldEndVnode = oldChildren[--oldEndIndex]
       newStartVnode = newChildren[++newStartIndex]
     } else if (isSameVnode(oldStartVnode, newEndVnode)) {
       // 交叉对比，处理reverse或sort情况
-      patchVnode(oldStartVnode, newEndVnode)
+      patchVnode(oldStartVnode, newEndVnode, insertedVnodeQueue)
       el.insertBefore(oldStartVnode.el, oldEndVnode.el.nextSibling)
       oldStartVnode = oldChildren[++oldStartIndex]
       newEndVnode = newChildren[--newEndIndex]
@@ -218,7 +218,7 @@ function updateChildren(el, oldChildren, newChildren) {
         let moveVnode = oldChildren[moveIndex]
         el.insertBefore(moveVnode.el, oldStartVnode.el)
         oldChildren[moveIndex] = undefined
-        patchVnode(moveVnode, newStartVnode)
+        patchVnode(moveVnode, newStartVnode, insertedVnodeQueue)
       } else {
         el.insertBefore(createElm(newStartVnode), oldStartVnode.el)
       }

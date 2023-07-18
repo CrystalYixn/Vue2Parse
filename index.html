@@ -8,23 +8,26 @@
 </head>
 <body>
   <script src="./dist/vue.js"></script>
-  <div id="app"><my><template #header="{msg}"><button>{{ msg }}</button></template></my></div>
+  <div id="app"><component :is="component" /></div>
   <script>
     const app = new Vue({
       el: '#app',
       data: {
-        msg: 'outer'
+        component: 'my'
       },
       components: {
         my: {
-          template: '<span><slot name="header" :msg="msg"></slot></span>',
-          data() {
-            return {
-              msg: 'inner'
-            }
-          }
-        }
-      }
+          template: '<span>111</span>',
+        },
+        my2: {
+          template: '<button>222</button>',
+        },
+      },
+      mounted() {
+        setTimeout(() => {
+          this.component = 'my2'
+        }, 1000)
+      },
     })
   </script>
 </body>

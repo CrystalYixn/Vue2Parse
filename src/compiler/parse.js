@@ -102,6 +102,7 @@ export function parseHTML(html) {
     processRef(element)
     processSlotContent(element)
     processSlotOutlet(element)
+    processComponent(element)
     processAttrs(element)
     if (currentParent) {
       if (element.slotScope) {
@@ -147,6 +148,13 @@ export function parseHTML(html) {
     if (el.tag === 'slot') {
       // slot插槽的名称
       el.slotName = getBindingAttr(el, 'name')
+    }
+  }
+
+  function processComponent(el) {
+    let binding
+    if (binding = getBindingAttr(el, 'is')) {
+      el.component = binding
     }
   }
 
@@ -222,7 +230,12 @@ export function parseHTML(html) {
   }
 
   function getBindingAttr(el, name) {
-    return JSON.stringify(getAndRemoveAttr(el, name, true))
+    const dynamicValue = getAndRemoveAttr(el, ':' + name)
+    if (dynamicValue) {
+      return dynamicValue
+    } else {
+      return JSON.stringify(getAndRemoveAttr(el, name, true))
+    }
   }
 
   function getAndRemoveAttr(el, name, removeFromMap) {
