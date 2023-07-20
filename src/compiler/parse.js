@@ -161,6 +161,7 @@ export function parseHTML(html) {
   /**  */
   function processAttrs(el) {
     const { attrsList = [] } = el
+    if (!attrsList.length) return
     const attrs = (el.attrs || (el.attrs = []))
     attrsList.forEach(i => {
       const { name, value } = i

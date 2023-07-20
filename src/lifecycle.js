@@ -44,16 +44,17 @@ export function initRender(vm) {
   vm.$slots = resolveSlots(opts._renderChildren)
   vm.$scopedSlots = {}
 
-  /** 解析默认插槽 */
-  function resolveSlots(children) {
-    // 具名插槽与作用域插槽没有孩子
-    if (!children?.length) return {}
-    const slots = {}
-    children.forEach(child => {
-      (slots.default || (slots.default = [])).push(child)
-    })
-    return slots
-  }
+}
+
+/** 解析默认插槽 */
+export function resolveSlots(children) {
+  // 具名插槽与作用域插槽没有孩子
+  if (!children?.length) return {}
+  const slots = {}
+  children.forEach(child => {
+    (slots.default || (slots.default = [])).push(child)
+  })
+  return slots
 }
 
 export function lifecycleMixin(Vue) {
