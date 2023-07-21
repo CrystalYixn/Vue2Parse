@@ -1,4 +1,4 @@
-import { callHook } from "../lifecycle"
+import { callHook, resolveSlots } from "../lifecycle"
 
 const isReservedTag = (tag) => {
   return ['a', 'div', 'p', 'button', 'ul', 'li', 'span'].includes(tag)
@@ -31,22 +31,27 @@ function createComponentVnode(Ctor, data, context, children, tag) {
   const listeners = data.on
   data.on = data.nativeOn
   // 手动增加一个attribute, 方便在patch时回调
-  data.hook = {
+  const componentVNodeHooks = {
     init(vnode, parent) {
-      // 在vnode上增加一个属性保存组件实例
-      let instance = vnode.componentInstance = new vnode.componentOptions.Ctor({
-        _isComponent: true,
-        _parentVnode: vnode,
-        parent,
-      })
-      // 在实例的$el上保存组件对应的真实dom
-      instance.$mount()
-    },
-    prepatch(propsData, oldVnode, vnode) {
-      const vm = vnode.componentInstance = oldVnode.componentInstance
-      for (const key in propsData) {
-        vm._props[key] = propsData[key]
+      // 被缓存过
+      if (vnode.componentInstance && vnode.data.keepAlive) {
+        componentVNodeHooks.prepatch(vnode, vnode)
+      } else {
+        // 在vnode上增加一个属性保存组件实例
+        let instance = vnode.componentInstance = new vnode.componentOptions.Ctor({
+          _isComponent: true,
+          _parentVnode: vnode,
+          parent,
+        })
+        // 在实例的$el上保存组件对应的真实dom
+        instance.$mount()
       }
+    },
+    prepatch(oldVnode, vnode) {
+      const options = vnode.componentOptions
+      const { propsData, listeners } = options
+      const child = vnode.componentInstance = oldVnode.componentInstance
+      updateChildComponent(child, propsData, listeners, vnode, options.children)
     },
     insert(vnode) {
       const { componentInstance } = vnode
@@ -56,6 +61,7 @@ function createComponentVnode(Ctor, data, context, children, tag) {
       }
     }
   }
+  data.hook = componentVNodeHooks
 
   function resolveAsyncComponent(factory) {
     if (factory.resolved) {
@@ -87,6 +93,16 @@ function createComponentVnode(Ctor, data, context, children, tag) {
   
   const propsData = extractPropsFromVnodeData(data, Ctor)
   return VNode(tag, data, undefined, null, undefined, context, { Ctor, propsData, listeners, tag, children })
+}
+
+function updateChildComponent(vm, propsData, listeners, parentVnode, renderChildren) {
+  // 更新 props
+  for (const key in propsData) {
+    vm._props[key] = propsData[key]
+  }
+  // 更新 slots
+  vm.$slots = resolveSlots(renderChildren, parentVnode.context)
+  vm.$forceUpdate()
 }
 
 function simpleNormalizeChildren(children) {

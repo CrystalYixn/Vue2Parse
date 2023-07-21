@@ -146,7 +146,7 @@ function patchVnode(oldVNode, vnode, insertedVnodeQueue) {
       oldVNode.el.textContent = vnode.text
     }
   }
-  vnode.data?.hook?.prepatch(vnode.componentOptions.propsData, oldVNode, vnode)
+  vnode.data?.hook?.prepatch(oldVNode, vnode)
   patchProps(el, oldVNode.data, vnode.data)
   const oldChildren = oldVNode.children || []
   const newChildren = vnode.children || []

@@ -8,7 +8,8 @@
 </head>
 <body>
   <script src="./dist/vue.js"></script>
-  <div id="app"><component :is="component" /></div>
+  <div id="app"><keep-alive><component :is="component"></component></keep-alive></div>
+  <!-- <div id="app"><component :is="component"></component></div> -->
   <script>
     const app = new Vue({
       el: '#app',
@@ -26,7 +27,10 @@
       mounted() {
         setTimeout(() => {
           this.component = 'my2'
-        }, 1000)
+          setTimeout(() => {
+            this.component = 'my'
+          }, 1500);
+        }, 0)
       },
     })
   </script>

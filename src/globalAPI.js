@@ -1,3 +1,4 @@
+import KeepAlive from "./keep-alive"
 import { mergeOptions } from "./utils"
 
 export function initGlobalAPI(Vue) {
@@ -14,6 +15,13 @@ export function initGlobalAPI(Vue) {
 
   /* 获得一个继承Vue的子组件构造函数，可以挂载元素 */
   Vue.extend = function(options) {
+    const SuperId = Vue.cid
+    // 缓存过的组件选项对象上会添加一个_Ctor属性
+    const cachedCtors = options._Ctor || (options._Ctor = {})
+    if (cachedCtors[SuperId]) {
+      return cachedCtors[SuperId]
+    }
+
     function Sub(options = {}) {
       this._init(options)
     }
@@ -23,10 +31,13 @@ export function initGlobalAPI(Vue) {
     Sub.prototype.constructor = Sub
     Sub.cid = cid++
     Sub.options = mergeOptions(Vue.options, options)
+
+    cachedCtors[SuperId] = Sub
     return Sub
   }
 
   Vue.options.components = {}
+  Vue.options.components['keep-alive'] = KeepAlive
   Vue.component = function(id, definition) {
     definition = typeof definition === 'function' ? definition : Vue.extend(definition)
     Vue.options.components[id] = definition
